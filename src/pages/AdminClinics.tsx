@@ -180,11 +180,15 @@ export default function AdminClinics() {
                       <Label className="text-xs">NIT</Label>
                       <Input className="mt-1" value={editForm.nit} onChange={e => setEditForm({ ...editForm, nit: e.target.value })} />
                     </div>
-                    <div>
+                     <div>
                       <Label className="text-xs">Dirección</Label>
                       <Input className="mt-1" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} />
                     </div>
-                  </div>
+                     <div>
+                      <Label className="text-xs">Quirófanos</Label>
+                      <Input className="mt-1" type="number" min="1" max="50" value={editForm.num_operating_rooms} onChange={e => setEditForm({ ...editForm, num_operating_rooms: e.target.value })} />
+                    </div>
+                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleUpdate} disabled={savingEdit} className="gap-1.5">
                       {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Guardar
