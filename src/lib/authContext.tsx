@@ -48,7 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Listen for auth changes
+    // Check initial session first
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        const appUser = await loadAppUser(session.user.id);
+        if (mounted) {
+          setUser(appUser);
+        }
+      }
+      if (mounted) setLoading(false);
+    });
+
+    // Listen for auth changes (sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
@@ -58,32 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (session?.user) {
-        setTimeout(async () => {
-          if (!mounted) return;
-          const appUser = await loadAppUser(session.user.id);
-          if (mounted && appUser) {
-            setUser(appUser);
-          }
-          if (mounted) setLoading(false);
-        }, 0);
-      } else if (event !== 'INITIAL_SESSION') {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    // Check initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return;
-      if (session?.user) {
+      // Only handle TOKEN_REFRESHED - login/signup set user directly
+      if (event === 'TOKEN_REFRESHED' && session?.user) {
         const appUser = await loadAppUser(session.user.id);
-        if (mounted) {
+        if (mounted && appUser) {
           setUser(appUser);
-          setLoading(false);
         }
-      } else {
-        setLoading(false);
       }
     });
 
@@ -109,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'El rol seleccionado no corresponde a este usuario.' };
     }
 
-    // Directly set user without waiting for onAuthStateChange
+    // Directly set user
     const appUser = await loadAppUser(data.user.id);
     if (appUser) {
       setUser(appUser);
@@ -127,14 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { success: false, error: error.message };
     if (!data.user) return { success: false, error: 'No se pudo crear el usuario.' };
 
-    // Assign role using security definer function
     const { error: roleError } = await supabase.rpc('assign_user_role', {
       _user_id: data.user.id,
       _role: role,
     });
     if (roleError) return { success: false, error: 'Error al asignar el rol: ' + roleError.message };
 
-    // Directly set user
     const appUser = await loadAppUser(data.user.id);
     if (appUser) {
       setUser(appUser);
