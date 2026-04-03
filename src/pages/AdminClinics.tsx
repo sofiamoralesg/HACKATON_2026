@@ -209,6 +209,7 @@ export default function AdminClinics() {
                   </div>
                   <span className="text-sm text-muted-foreground">{c.nit}</span>
                   <span className="text-sm text-muted-foreground">{c.address}</span>
+                  <span className="text-sm text-muted-foreground text-center">{(c as any).num_operating_rooms || 4}</span>
                   <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString('es-ES')}</span>
                   <div className="flex gap-1.5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(c)}>
