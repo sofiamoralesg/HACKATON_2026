@@ -8,8 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { UserPlus, Users, Mail, Lock, User, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Users, Mail, Lock, User, Shield, Loader2, Eye, EyeOff, Pencil, Trash2, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import type { UserRole } from '@/lib/authContext';
 
 const roleLabels: Record<string, string> = {
@@ -27,6 +31,12 @@ export default function AdminUsers() {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', name: '', role: '' as string, specialty: '' as string });
 
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', role: '', specialty: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
@@ -42,26 +52,25 @@ export default function AdminUsers() {
     },
   });
 
+  const getToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token;
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.role) { toast.error('Selecciona un rol'); return; }
     if (form.role === 'consulta' && !form.specialty) { toast.error('Selecciona una especialidad'); return; }
     setSubmitting(true);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-
+    const token = await getToken();
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ ...form, specialty: form.role === 'consulta' ? form.specialty : undefined }),
     });
 
     const result = await res.json();
-
     if (result.success) {
       toast.success(`Usuario ${form.name} creado exitosamente`);
       setForm({ email: '', password: '', name: '', role: '', specialty: '' });
@@ -71,6 +80,54 @@ export default function AdminUsers() {
       toast.error(result.error || 'Error al crear usuario');
     }
     setSubmitting(false);
+  };
+
+  const startEdit = (u: typeof users[0]) => {
+    setEditingId(u.id);
+    setEditForm({ name: u.name, role: u.role, specialty: u.specialty || '' });
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId) return;
+    setSavingEdit(true);
+    const token = await getToken();
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user?action=update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        userId: editingId,
+        name: editForm.name,
+        role: editForm.role,
+        specialty: editForm.role === 'consulta' ? editForm.specialty : undefined,
+      }),
+    });
+    const result = await res.json();
+    if (result.success) {
+      toast.success('Usuario actualizado');
+      setEditingId(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    } else {
+      toast.error(result.error || 'Error al actualizar');
+    }
+    setSavingEdit(false);
+  };
+
+  const handleDelete = async (userId: string) => {
+    setDeletingId(userId);
+    const token = await getToken();
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user?action=delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ userId }),
+    });
+    const result = await res.json();
+    if (result.success) {
+      toast.success('Usuario eliminado');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    } else {
+      toast.error(result.error || 'Error al eliminar');
+    }
+    setDeletingId(null);
   };
 
   if (user?.role !== 'supervisor') {
@@ -168,35 +225,111 @@ export default function AdminUsers() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
             <span>Nombre</span>
             <span>Correo</span>
             <span>Rol</span>
             <span>Fecha</span>
+            <span>Acciones</span>
           </div>
           {users.length === 0 ? (
             <div className="px-5 py-8 text-center text-muted-foreground">No hay usuarios registrados.</div>
           ) : users.map((u, i) => (
-            <motion.div key={u.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="grid grid-cols-[1fr_1fr_auto_auto] items-center gap-4 border-b px-5 py-4 last:border-0">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                  <User className="h-4 w-4 text-primary" />
+            <motion.div key={u.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="border-b last:border-0">
+              {editingId === u.id ? (
+                <div className="px-5 py-4 space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">Nombre</Label>
+                      <Input className="mt-1" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Rol</Label>
+                      <Select value={editForm.role} onValueChange={v => setEditForm({ ...editForm, role: v, specialty: '' })}>
+                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="supervisor">Supervisor</SelectItem>
+                          <SelectItem value="coordinador">Coordinador</SelectItem>
+                          <SelectItem value="encargado">Encargado del Checklist</SelectItem>
+                          <SelectItem value="consulta">Acceso de Consulta</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {editForm.role === 'consulta' && (
+                      <div>
+                        <Label className="text-xs">Especialidad</Label>
+                        <Select value={editForm.specialty} onValueChange={v => setEditForm({ ...editForm, specialty: v })}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cirujano">Cirujano</SelectItem>
+                            <SelectItem value="anestesiologo">Anestesiólogo</SelectItem>
+                            <SelectItem value="otro">Otro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleUpdate} disabled={savingEdit} className="gap-1.5">
+                      {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                      Guardar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="gap-1.5">
+                      <X className="h-3.5 w-3.5" /> Cancelar
+                    </Button>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-foreground">{u.name}</span>
-              </div>
-              <span className="text-sm text-muted-foreground">{u.email}</span>
-              <div className="flex flex-col items-start gap-0.5">
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                  u.role === 'supervisor' ? 'bg-destructive/10 text-destructive' : u.role === 'coordinador' ? 'bg-primary/10 text-primary' : u.role === 'encargado' ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent-foreground'
-                }`}>
-                  <Shield className="h-3 w-3" />
-                  {roleLabels[u.role] || u.role}
-                </span>
-                {u.role === 'consulta' && u.specialty && (
-                  <span className="text-xs text-muted-foreground capitalize ml-1">{u.specialty === 'anestesiologo' ? 'Anestesiólogo' : u.specialty === 'cirujano' ? 'Cirujano' : 'Otro'}</span>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('es-ES')}</span>
+              ) : (
+                <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] items-center gap-4 px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{u.name}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{u.email}</span>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                      u.role === 'supervisor' ? 'bg-destructive/10 text-destructive' : u.role === 'coordinador' ? 'bg-primary/10 text-primary' : u.role === 'encargado' ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent-foreground'
+                    }`}>
+                      <Shield className="h-3 w-3" />
+                      {roleLabels[u.role] || u.role}
+                    </span>
+                    {u.role === 'consulta' && u.specialty && (
+                      <span className="text-xs text-muted-foreground capitalize ml-1">{u.specialty === 'anestesiologo' ? 'Anestesiólogo' : u.specialty === 'cirujano' ? 'Cirujano' : 'Otro'}</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('es-ES')}</span>
+                  <div className="flex gap-1.5">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(u)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    {u.id !== user?.id && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar a {u.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción eliminará permanentemente al usuario y todos sus datos asociados.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(u.id)} disabled={deletingId === u.id}>
+                              {deletingId === u.id ? 'Eliminando...' : 'Eliminar'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
