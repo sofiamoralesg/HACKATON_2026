@@ -13,7 +13,8 @@ import { motion } from 'framer-motion';
 import type { UserRole } from '@/lib/authContext';
 
 const roleLabels: Record<string, string> = {
-  coordinador: 'Coordinador / Admin',
+  supervisor: 'Supervisor',
+  coordinador: 'Coordinador',
   encargado: 'Encargado del Checklist',
   consulta: 'Acceso de Consulta',
 };
@@ -71,7 +72,7 @@ export default function AdminUsers() {
     setSubmitting(false);
   };
 
-  if (user?.role !== 'coordinador') {
+  if (user?.role !== 'supervisor') {
     return <Layout><p className="text-destructive font-medium">No tienes permisos para ver esta página.</p></Layout>;
   }
 
@@ -127,7 +128,8 @@ export default function AdminUsers() {
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="coordinador">Coordinador / Admin</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                  <SelectItem value="coordinador">Coordinador</SelectItem>
                   <SelectItem value="encargado">Encargado del Checklist</SelectItem>
                   <SelectItem value="consulta">Acceso de Consulta</SelectItem>
                 </SelectContent>

@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 const roles: { role: UserRole; label: string; desc: string; icon: typeof Shield }[] = [
-  { role: 'coordinador', label: 'Coordinador / Admin', desc: 'Programa cirugías, asigna equipos y revisa reportes globales.', icon: UserCog },
+  { role: 'supervisor', label: 'Supervisor', desc: 'Administra usuarios del sistema. Crea cuentas y asigna roles.', icon: Shield },
+  { role: 'coordinador', label: 'Coordinador', desc: 'Programa cirugías, asigna equipos y revisa reportes globales.', icon: UserCog },
   { role: 'encargado', label: 'Encargado del Checklist', desc: 'Ejecuta el checklist en quirófano durante la cirugía.', icon: ClipboardCheck },
   { role: 'consulta', label: 'Acceso de Consulta', desc: 'Cirujano o anestesiólogo. Ve cirugías asignadas e historial.', icon: Eye },
 ];
@@ -27,7 +28,10 @@ export default function Login() {
 
   // Redirect when user is authenticated
   useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true });
+    if (user) {
+      const dest = user.role === 'supervisor' ? '/admin/usuarios' : '/dashboard';
+      navigate(dest, { replace: true });
+    }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {

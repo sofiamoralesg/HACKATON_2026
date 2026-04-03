@@ -14,12 +14,15 @@ export default function Layout({ children }: { children: ReactNode }) {
     navigate('/');
   };
 
-  const navItems = user?.role === 'coordinador'
+  const navItems = user?.role === 'supervisor'
+    ? [
+        { label: 'Usuarios', path: '/admin/usuarios', icon: Users },
+      ]
+    : user?.role === 'coordinador'
     ? [
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Nueva Cirugía', path: '/nueva-cirugia', icon: Plus },
         { label: 'Historial', path: '/historial', icon: History },
-        { label: 'Usuarios', path: '/admin/usuarios', icon: Users },
       ]
     : user?.role === 'encargado'
     ? [

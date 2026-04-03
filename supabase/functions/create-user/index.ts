@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!roleRow || roleRow.role !== "coordinador") {
-      return new Response(JSON.stringify({ error: "Solo los coordinadores pueden crear usuarios" }), {
+    if (!roleRow || roleRow.role !== "supervisor") {
+      return new Response(JSON.stringify({ error: "Solo los supervisores pueden crear usuarios" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!["coordinador", "encargado", "consulta"].includes(role)) {
+    if (!["supervisor", "coordinador", "encargado", "consulta"].includes(role)) {
       return new Response(JSON.stringify({ error: "Rol inválido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
