@@ -20,32 +20,29 @@ export default function NewSurgery() {
     patient: '', procedure: '', room: '', date: '', time: '', surgeon: '', anesthesiologist: '', checklistOwner: '',
   });
 
-  // Fetch consulta users with specialties from DB
   const { data: consultaUsers = [] } = useQuery({
     queryKey: ['consulta-users'],
     queryFn: async () => {
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'consulta');
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'consulta');
       if (!roles || roles.length === 0) return [];
-
-      const userIds = roles.map(r => r.user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name, specialty')
-        .in('id', userIds);
+      const { data: profiles } = await supabase.from('profiles').select('id, name, specialty').in('id', roles.map(r => r.user_id));
       return profiles || [];
     },
   });
 
-  const surgeonsList = consultaUsers
-    .filter(u => u.specialty === 'cirujano')
-    .map(u => u.name);
+  const { data: encargadoUsers = [] } = useQuery({
+    queryKey: ['encargado-users'],
+    queryFn: async () => {
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'encargado');
+      if (!roles || roles.length === 0) return [];
+      const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', roles.map(r => r.user_id));
+      return profiles || [];
+    },
+  });
 
-  const anesthesiologistsList = consultaUsers
-    .filter(u => u.specialty === 'anestesiologo')
-    .map(u => u.name);
+  const surgeonsList = consultaUsers.filter(u => u.specialty === 'cirujano').map(u => u.name);
+  const anesthesiologistsList = consultaUsers.filter(u => u.specialty === 'anestesiologo').map(u => u.name);
+  const encargadosList = encargadoUsers.map(u => u.name);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
