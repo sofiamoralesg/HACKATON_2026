@@ -30,7 +30,7 @@ export default function AdminUsers() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at');
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at, specialty');
       if (pErr) throw pErr;
       const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
       if (rErr) throw rErr;
