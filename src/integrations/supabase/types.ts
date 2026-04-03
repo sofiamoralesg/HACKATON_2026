@@ -232,6 +232,7 @@ export type Database = {
         Row: {
           anesthesiologist: string
           checklist_owner: string
+          clinic_id: string | null
           created_at: string
           created_by: string | null
           date: string
@@ -248,6 +249,7 @@ export type Database = {
         Insert: {
           anesthesiologist: string
           checklist_owner: string
+          clinic_id?: string | null
           created_at?: string
           created_by?: string | null
           date: string
@@ -264,6 +266,7 @@ export type Database = {
         Update: {
           anesthesiologist?: string
           checklist_owner?: string
+          clinic_id?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
@@ -277,7 +280,15 @@ export type Database = {
           time?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "surgeries_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
