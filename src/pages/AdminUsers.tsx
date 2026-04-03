@@ -347,6 +347,9 @@ export default function AdminUsers() {
                       <span className="text-xs text-muted-foreground capitalize ml-1">{u.specialty === 'anestesiologo' ? 'Anestesiólogo' : u.specialty === 'cirujano' ? 'Cirujano' : 'Otro'}</span>
                     )}
                   </div>
+                  {user?.isSuperAdmin && (
+                    <span className="text-xs text-muted-foreground">{(u as any).clinicName || '—'}</span>
+                  )}
                   <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('es-ES')}</span>
                   <div className="flex gap-1.5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(u)}>
