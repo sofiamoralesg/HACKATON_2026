@@ -65,6 +65,9 @@ export default function ChecklistTimeOut({ questions, onAnswer, instruments, onU
                 onChange={(e) => updateCount(inst.id, parseInt(e.target.value) || 0)}
                 className="w-20 text-center"
               />
+              <Button type="button" variant="ghost" size="icon" onClick={() => removeInstrument(inst.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>
