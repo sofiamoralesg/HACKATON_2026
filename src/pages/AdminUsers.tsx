@@ -25,12 +25,12 @@ export default function AdminUsers() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: '', password: '', name: '', role: '' as string });
+  const [form, setForm] = useState({ email: '', password: '', name: '', role: '' as string, specialty: '' as string });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at');
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at, specialty');
       if (pErr) throw pErr;
       const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
       if (rErr) throw rErr;
@@ -45,6 +45,7 @@ export default function AdminUsers() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.role) { toast.error('Selecciona un rol'); return; }
+    if (form.role === 'consulta' && !form.specialty) { toast.error('Selecciona una especialidad'); return; }
     setSubmitting(true);
 
     const { data: sessionData } = await supabase.auth.getSession();
@@ -56,14 +57,14 @@ export default function AdminUsers() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, specialty: form.role === 'consulta' ? form.specialty : undefined }),
     });
 
     const result = await res.json();
 
     if (result.success) {
       toast.success(`Usuario ${form.name} creado exitosamente`);
-      setForm({ email: '', password: '', name: '', role: '' });
+      setForm({ email: '', password: '', name: '', role: '', specialty: '' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } else {
@@ -125,7 +126,7 @@ export default function AdminUsers() {
 
             <div className="space-y-1.5">
               <Label>Rol</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v, specialty: '' })}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="supervisor">Supervisor</SelectItem>
@@ -135,6 +136,20 @@ export default function AdminUsers() {
                 </SelectContent>
               </Select>
             </div>
+
+            {form.role === 'consulta' && (
+              <div className="space-y-1.5">
+                <Label>Especialidad</Label>
+                <Select value={form.specialty} onValueChange={(v) => setForm({ ...form, specialty: v })}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar especialidad" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cirujano">Cirujano</SelectItem>
+                    <SelectItem value="anestesiologo">Anestesiólogo</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
@@ -170,12 +185,17 @@ export default function AdminUsers() {
                 <span className="text-sm font-medium text-foreground">{u.name}</span>
               </div>
               <span className="text-sm text-muted-foreground">{u.email}</span>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                u.role === 'coordinador' ? 'bg-primary/10 text-primary' : u.role === 'encargado' ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent-foreground'
-              }`}>
-                <Shield className="h-3 w-3" />
-                {roleLabels[u.role] || u.role}
-              </span>
+              <div className="flex flex-col items-start gap-0.5">
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                  u.role === 'supervisor' ? 'bg-destructive/10 text-destructive' : u.role === 'coordinador' ? 'bg-primary/10 text-primary' : u.role === 'encargado' ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent-foreground'
+                }`}>
+                  <Shield className="h-3 w-3" />
+                  {roleLabels[u.role] || u.role}
+                </span>
+                {u.role === 'consulta' && u.specialty && (
+                  <span className="text-xs text-muted-foreground capitalize ml-1">{u.specialty === 'anestesiologo' ? 'Anestesiólogo' : u.specialty === 'cirujano' ? 'Cirujano' : 'Otro'}</span>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('es-ES')}</span>
             </motion.div>
           ))}

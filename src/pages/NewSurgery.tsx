@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/authContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SearchableSelect from '@/components/SearchableSelect';
-import { surgeonsList, anesthesiologistsList } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 
@@ -19,6 +19,33 @@ export default function NewSurgery() {
   const [form, setForm] = useState({
     patient: '', procedure: '', room: '', date: '', time: '', surgeon: '', anesthesiologist: '', checklistOwner: '',
   });
+
+  // Fetch consulta users with specialties from DB
+  const { data: consultaUsers = [] } = useQuery({
+    queryKey: ['consulta-users'],
+    queryFn: async () => {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'consulta');
+      if (!roles || roles.length === 0) return [];
+
+      const userIds = roles.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name, specialty')
+        .in('id', userIds);
+      return profiles || [];
+    },
+  });
+
+  const surgeonsList = consultaUsers
+    .filter(u => u.specialty === 'cirujano')
+    .map(u => u.name);
+
+  const anesthesiologistsList = consultaUsers
+    .filter(u => u.specialty === 'anestesiologo')
+    .map(u => u.name);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
