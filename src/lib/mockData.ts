@@ -56,31 +56,33 @@ export const commonInstruments = [
   'Cánula de aspiración (Yankauer)',
 ];
 
-// WHO-based checklist questions
+// WHO Surgical Safety Checklist — Sign In (Before anesthesia induction)
 export const signInQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
-  { id: 'si1', text: '¿El paciente confirmó su identidad, sitio quirúrgico y procedimiento?' },
-  { id: 'si2', text: '¿Está marcado el sitio quirúrgico?' },
-  { id: 'si3', text: '¿Se completó la verificación de seguridad anestésica?' },
-  { id: 'si4', text: '¿El pulsioxímetro está colocado y funcionando?' },
-  { id: 'si5', text: '¿El paciente tiene alergias conocidas?' },
-  { id: 'si6', text: '¿Existe riesgo de vía aérea difícil o aspiración?' },
-  { id: 'si7', text: '¿Existe riesgo de pérdida de sangre >500ml (7ml/kg en niños)?' },
-  { id: 'si8', text: '¿Se verificó el consentimiento informado firmado?' },
+  { id: 'si1', text: '¿Ha confirmado el paciente su identidad, el sitio quirúrgico, el procedimiento y su consentimiento?' },
+  { id: 'si2', text: '¿Se ha marcado el sitio quirúrgico? (Sí / No procede)' },
+  { id: 'si3', text: '¿Se ha completado la comprobación de los aparatos de anestesia y la medicación anestésica?' },
+  { id: 'si4', text: '¿Se ha colocado el pulsioxímetro al paciente y funciona?' },
+  { id: 'si5', text: '¿Tiene el paciente alergias conocidas?' },
+  { id: 'si6', text: '¿Tiene el paciente vía aérea difícil / riesgo de aspiración? (Si Sí: hay materiales y equipos / ayuda disponible)' },
+  { id: 'si7', text: '¿Tiene el paciente riesgo de hemorragia >500 ml (7 ml/kg en niños)? (Si Sí: se ha previsto la disponibilidad de líquidos y dos vías IV o centrales)' },
 ];
 
+// WHO Surgical Safety Checklist — Time Out (Before skin incision)
 export const timeOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
-  { id: 'to1', text: '¿Todos los miembros del equipo se presentaron por nombre y función?' },
-  { id: 'to2', text: '¿Se confirmó la identidad del paciente, sitio quirúrgico y procedimiento?' },
-  { id: 'to3', text: '¿Se administró profilaxis antibiótica en los últimos 60 minutos?' },
-  { id: 'to4', text: '¿El cirujano revisó los pasos críticos, duración y pérdida de sangre esperada?' },
-  { id: 'to5', text: '¿El anestesiólogo revisó si hay alguna preocupación específica del paciente?' },
-  { id: 'to6', text: '¿Enfermería confirmó la esterilización y disponibilidad de equipamiento?' },
-  { id: 'to7', text: '¿Están disponibles las imágenes diagnósticas necesarias?' },
+  { id: 'to1', text: '¿Todos los miembros del equipo se han presentado por su nombre y función?' },
+  { id: 'to2', text: '¿Se ha confirmado la identidad del paciente, el sitio quirúrgico y el procedimiento?' },
+  { id: 'to3', text: '¿Se ha administrado profilaxis antibiótica en los últimos 60 minutos? (Sí / No procede)' },
+  { id: 'to4', text: 'Cirujano: ¿Cuáles serán los pasos críticos o no sistematizados? ¿Cuánto durará la operación? ¿Cuál es la pérdida de sangre prevista?' },
+  { id: 'to5', text: 'Anestesista: ¿Presenta el paciente algún problema específico?' },
+  { id: 'to6', text: 'Equipo de enfermería: ¿Se ha confirmado la esterilidad (con resultados de los indicadores)? ¿Hay dudas o problemas relacionados con el instrumental y los equipos?' },
+  { id: 'to7', text: '¿Pueden visualizarse las imágenes diagnósticas esenciales? (Sí / No procede)' },
 ];
 
+// WHO Surgical Safety Checklist — Sign Out (Before patient leaves OR)
 export const signOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
-  { id: 'so1', text: '¿Se confirmó verbalmente el procedimiento realizado?' },
-  { id: 'so2', text: '¿Las muestras de tejido están correctamente etiquetadas?' },
-  { id: 'so3', text: '¿Hubo algún problema con el equipamiento que deba reportarse?' },
-  { id: 'so4', text: '¿Se revisaron los puntos clave para la recuperación del paciente?' },
+  { id: 'so1', text: 'El enfermero confirma verbalmente: el nombre del procedimiento' },
+  { id: 'so2', text: 'El enfermero confirma verbalmente: el recuento de instrumentos, gasas y agujas' },
+  { id: 'so3', text: 'El enfermero confirma verbalmente: el etiquetado de las muestras (lectura de la etiqueta en voz alta, incluido el nombre del paciente)' },
+  { id: 'so4', text: '¿Hay problemas que resolver relacionados con el instrumental y los equipos?' },
+  { id: 'so5', text: 'Cirujano, anestesista y enfermero: ¿Cuáles son los aspectos críticos de la recuperación y el tratamiento del paciente?' },
 ];
