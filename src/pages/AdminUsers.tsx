@@ -25,7 +25,7 @@ export default function AdminUsers() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: '', password: '', name: '', role: '' as string });
+  const [form, setForm] = useState({ email: '', password: '', name: '', role: '' as string, specialty: '' as string });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
