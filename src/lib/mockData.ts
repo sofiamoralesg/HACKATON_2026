@@ -6,6 +6,8 @@ export interface ChecklistQuestion {
   answer?: 'si' | 'no' | null;
   answeredBy?: string;
   answeredAt?: string;
+  followUpText?: string;
+  followUpAnswer?: 'si' | 'no' | null;
 }
 
 export interface InstrumentCount {
