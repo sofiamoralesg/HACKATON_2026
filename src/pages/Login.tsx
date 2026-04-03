@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/authContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, UserCog, ClipboardCheck, Eye, ArrowLeft, Mail, Lock, AlertCircle, UserPlus, LogIn, User } from 'lucide-react';
+import { Shield, UserCog, ClipboardCheck, Eye, ArrowLeft, Mail, Lock, AlertCircle, LogIn, Loader2 } from 'lucide-react';
 import type { UserRole } from '@/lib/authContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,10 @@ const roles: { role: UserRole; label: string; desc: string; icon: typeof Shield 
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, signUp, resetPassword, user } = useAuth();
+  const { login, resetPassword, user, loading } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,19 +38,13 @@ export default function Login() {
     setError('');
     setSubmitting(true);
 
-    if (isSignUp) {
-      if (!name.trim()) { setError('Ingresa tu nombre completo.'); setSubmitting(false); return; }
-      const result = await signUp(email, password, name, selectedRole);
-      if (result.success) {
-        toast.success('Cuenta creada exitosamente');
-      } else {
-        setError(result.error || 'Error al crear la cuenta');
-      }
-    } else {
+    try {
       const result = await login(email, password, selectedRole);
       if (!result.success) {
         setError(result.error || 'Error al iniciar sesión');
       }
+    } catch (err) {
+      setError('Error de conexión. Intenta de nuevo.');
     }
     setSubmitting(false);
   };
@@ -70,6 +62,14 @@ export default function Login() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
@@ -79,7 +79,7 @@ export default function Login() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">SafeOp</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {selectedRole ? (isSignUp ? 'Crea tu cuenta' : 'Ingresa tus credenciales') : 'Selecciona tu rol para ingresar'}
+            {selectedRole ? 'Ingresa tus credenciales' : 'Selecciona tu rol para ingresar'}
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export default function Login() {
             </motion.div>
           ) : (
             <motion.div key="credentials" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-              <button onClick={() => { setSelectedRole(null); setError(''); setEmail(''); setPassword(''); setName(''); }} className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => { setSelectedRole(null); setError(''); setEmail(''); setPassword(''); }} className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="h-4 w-4" /> Cambiar rol
               </button>
 
@@ -133,16 +133,6 @@ export default function Login() {
                   </motion.div>
                 )}
 
-                {isSignUp && (
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Nombre completo</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input type="text" placeholder="Dr. Juan Pérez" value={name} onChange={(e) => setName(e.target.value)} className="pl-10" required />
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">Correo electrónico</label>
                   <div className="relative">
@@ -160,17 +150,12 @@ export default function Login() {
                 </div>
 
                 <Button type="submit" className="w-full gap-2" disabled={submitting}>
-                  {isSignUp ? <><UserPlus className="h-4 w-4" /> Crear Cuenta</> : <><LogIn className="h-4 w-4" /> Iniciar Sesión</>}
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+                  Iniciar Sesión
                 </Button>
 
-                {!isSignUp && (
-                  <button type="button" onClick={handleForgotPassword} className="w-full text-center text-sm text-primary hover:underline">
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                )}
-
-                <button type="button" onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+                <button type="button" onClick={handleForgotPassword} className="w-full text-center text-sm text-primary hover:underline">
+                  ¿Olvidaste tu contraseña?
                 </button>
               </form>
             </motion.div>
