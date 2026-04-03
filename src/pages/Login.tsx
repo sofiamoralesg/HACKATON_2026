@@ -28,7 +28,10 @@ export default function Login() {
 
   // Redirect when user is authenticated
   useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true });
+    if (user) {
+      const dest = user.role === 'supervisor' ? '/admin/usuarios' : '/dashboard';
+      navigate(dest, { replace: true });
+    }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
