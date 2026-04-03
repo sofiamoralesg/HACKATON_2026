@@ -62,6 +62,7 @@ export default function NewSurgery() {
       anesthesiologist: form.anesthesiologist,
       checklist_owner: form.checklistOwner,
       created_by: user?.id,
+      clinic_id: user?.clinicId || null,
     });
     if (error) {
       toast.error('Error al programar la cirugía: ' + error.message);
