@@ -80,6 +80,9 @@ export default function Checklist() {
     return <Layout><p className="text-muted-foreground">Cirugía no encontrada.</p></Layout>;
   }
 
+  const noBlockingAnswers = (questions: ChecklistQuestion[]) =>
+    questions.every((q) => !(q.blockOnNo && q.answer === 'no'));
+
   const allSignInAnswered = signInAnswers.every((q) => q.answer !== null);
   const signInFollowUpsOk = signInAnswers.every((q) => {
     if (q.followUpText && q.answer === 'si') {
@@ -93,9 +96,9 @@ export default function Checklist() {
   const instrumentsMatch = finalInstruments.length > 0 && finalInstruments.every((i) => i.finalCount === i.initialCount);
 
   const canAdvance = () => {
-    if (currentMoment === 0) return allSignInAnswered && signInFollowUpsOk;
-    if (currentMoment === 1) return allTimeOutAnswered && usedInstruments.length > 0;
-    if (currentMoment === 2) return allSignOutAnswered && instrumentsMatch;
+    if (currentMoment === 0) return allSignInAnswered && signInFollowUpsOk && noBlockingAnswers(signInAnswers);
+    if (currentMoment === 1) return allTimeOutAnswered && usedInstruments.length > 0 && noBlockingAnswers(timeOutAnswers);
+    if (currentMoment === 2) return allSignOutAnswered && instrumentsMatch && noBlockingAnswers(signOutAnswers);
     return true;
   };
 
