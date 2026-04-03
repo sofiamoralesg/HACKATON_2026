@@ -64,6 +64,19 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Prevent deleting super admin
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", userId)
+        .single();
+
+      if (targetProfile?.is_super_admin) {
+        return new Response(JSON.stringify({ error: "No se puede eliminar al super administrador" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { error: surgeriesError } = await adminClient
         .from("surgeries")
         .update({ created_by: null })
