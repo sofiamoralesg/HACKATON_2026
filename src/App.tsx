@@ -21,19 +21,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Landing />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/checklist/:id" element={<ProtectedRoute><Checklist /></ProtectedRoute>} />
-    <Route path="/nueva-cirugia" element={<ProtectedRoute><NewSurgery /></ProtectedRoute>} />
-    <Route path="/historial" element={<ProtectedRoute><History /></ProtectedRoute>} />
-    <Route path="/cirugia/:id" element={<ProtectedRoute><SurgeryDetail /></ProtectedRoute>} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -41,7 +28,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/checklist/:id" element={<ProtectedRoute><Checklist /></ProtectedRoute>} />
+            <Route path="/nueva-cirugia" element={<ProtectedRoute><NewSurgery /></ProtectedRoute>} />
+            <Route path="/historial" element={<ProtectedRoute><History /></ProtectedRoute>} />
+            <Route path="/cirugia/:id" element={<ProtectedRoute><SurgeryDetail /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
