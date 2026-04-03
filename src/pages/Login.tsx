@@ -16,7 +16,7 @@ const roles: { role: UserRole; label: string; desc: string; icon: typeof Shield 
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, signUp, resetPassword } = useAuth();
+  const { login, signUp, resetPassword, user } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -24,6 +24,11 @@ export default function Login() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Redirect when user is authenticated
+  useEffect(() => {
+    if (user) navigate('/dashboard', { replace: true });
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
