@@ -113,6 +113,7 @@ export default function SurgeryDetail() {
     if (!surgery) return;
     setEditForm({
       patient: surgery.patient,
+      patient_id: (surgery as any).patient_id || '',
       procedure_name: surgery.procedure_name,
       room: surgery.room,
       date: surgery.date,
