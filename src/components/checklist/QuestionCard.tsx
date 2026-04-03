@@ -55,6 +55,12 @@ export default function QuestionCard({ question, onAnswer, onFollowUpAnswer, ind
         )}
       </div>
 
+      {blockingNo && (
+        <p className="mt-2 text-xs text-destructive font-medium">
+          ⚠ Esta verificación es obligatoria. No se puede continuar si la respuesta es "No".
+        </p>
+      )}
+
       {showFollowUp && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
