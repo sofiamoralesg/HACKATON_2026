@@ -72,7 +72,7 @@ export default function AdminUsers() {
     setSubmitting(false);
   };
 
-  if (user?.role !== 'coordinador') {
+  if (user?.role !== 'supervisor') {
     return <Layout><p className="text-destructive font-medium">No tienes permisos para ver esta página.</p></Layout>;
   }
 
