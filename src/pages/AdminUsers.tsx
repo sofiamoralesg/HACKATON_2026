@@ -328,7 +328,7 @@ export default function AdminUsers() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] items-center gap-4 px-5 py-4">
+                <div className={`grid items-center gap-4 px-5 py-4 ${user?.isSuperAdmin ? 'grid-cols-[1fr_1fr_auto_auto_auto_auto]' : 'grid-cols-[1fr_1fr_auto_auto_auto]'}`}>
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                       <User className="h-4 w-4 text-primary" />
