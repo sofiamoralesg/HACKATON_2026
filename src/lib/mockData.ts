@@ -64,9 +64,9 @@ export const signInQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 
   { id: 'si2', text: '¿Se ha marcado el sitio quirúrgico? (Sí / No procede)' },
   { id: 'si3', text: '¿Se ha completado la comprobación de los aparatos de anestesia y la medicación anestésica?' },
   { id: 'si4', text: '¿Se ha colocado el pulsioxímetro al paciente y funciona?' },
-  { id: 'si5', text: '¿Tiene el paciente alergias conocidas?' },
-  { id: 'si6', text: '¿Tiene el paciente vía aérea difícil / riesgo de aspiración? (Si Sí: hay materiales y equipos / ayuda disponible)' },
-  { id: 'si7', text: '¿Tiene el paciente riesgo de hemorragia >500 ml (7 ml/kg en niños)? (Si Sí: se ha previsto la disponibilidad de líquidos y dos vías IV o centrales)' },
+  { id: 'si5', text: '¿Tiene el paciente alergias conocidas?', followUpText: '¿Son conocidas y tenidas en cuenta?' },
+  { id: 'si6', text: '¿Tiene el paciente vía aérea difícil / riesgo de aspiración?', followUpText: '¿Hay materiales, equipos y ayuda disponible?' },
+  { id: 'si7', text: '¿Tiene el paciente riesgo de hemorragia >500 ml (7 ml/kg en niños)?', followUpText: '¿Se ha previsto la disponibilidad de líquidos y dos vías IV o centrales?' },
 ];
 
 // WHO Surgical Safety Checklist — Time Out (Before skin incision)
