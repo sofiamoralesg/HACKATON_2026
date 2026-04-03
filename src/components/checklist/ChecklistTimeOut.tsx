@@ -4,7 +4,7 @@ import QuestionCard from './QuestionCard';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Wrench } from 'lucide-react';
+import { Plus, Wrench, Trash2 } from 'lucide-react';
 
 interface Props {
   questions: ChecklistQuestion[];
