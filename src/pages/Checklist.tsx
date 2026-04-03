@@ -243,7 +243,7 @@ export default function Checklist() {
         <p className="text-muted-foreground">{moments[currentMoment].subtitle}</p>
       </motion.div>
 
-      {currentMoment === 0 && <ChecklistSignIn questions={signInAnswers} onAnswer={(qId, ans) => handleAnswer(signInAnswers, setSignInAnswers, qId, ans)} patientName={surgery.patient} patientId={(surgery as any).patient_id || undefined} />}
+      {currentMoment === 0 && <ChecklistSignIn questions={signInAnswers} onAnswer={(qId, ans) => handleAnswer(signInAnswers, setSignInAnswers, qId, ans)} onFollowUpAnswer={(qId, ans) => handleFollowUpAnswer(signInAnswers, setSignInAnswers, qId, ans)} patientName={surgery.patient} patientId={(surgery as any).patient_id || undefined} />}
       {currentMoment === 1 && <ChecklistTimeOut questions={timeOutAnswers} onAnswer={(qId, ans) => handleAnswer(timeOutAnswers, setTimeOutAnswers, qId, ans)} instruments={instruments} onUpdateInstruments={setInstruments} />}
       {currentMoment === 2 && <ChecklistSignOut questions={signOutAnswers} onAnswer={(qId, ans) => handleAnswer(signOutAnswers, setSignOutAnswers, qId, ans)} instruments={finalInstruments} onUpdateFinalCount={(instId, count) => setFinalInstruments((prev) => prev.map((i) => i.id === instId ? { ...i, finalCount: count } : i))} />}
       {currentMoment === 3 && <ChecklistSignature userName={user?.name || ''} userRole={user?.role || ''} startTime={startTime} endTime={new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} onAccept={handleComplete} />}
