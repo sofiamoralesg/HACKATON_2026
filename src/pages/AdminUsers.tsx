@@ -116,7 +116,7 @@ export default function AdminUsers() {
 
   const startEdit = (u: typeof users[0]) => {
     setEditingId(u.id);
-    setEditForm({ name: u.name, role: u.role, specialty: u.specialty || '' });
+    setEditForm({ name: u.name, role: u.role, specialty: u.specialty || '', clinicId: (u as any).clinic_id || '' });
   };
 
   const handleUpdate = async () => {
