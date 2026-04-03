@@ -31,7 +31,7 @@ export default function AdminUsers() {
   const [form, setForm] = useState({ email: '', password: '', name: '', role: '', specialty: '', clinicId: '' });
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', role: '', specialty: '' });
+  const [editForm, setEditForm] = useState({ name: '', role: '', specialty: '', clinicId: '' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -49,7 +49,7 @@ export default function AdminUsers() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at, specialty, clinic_id');
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at, specialty, clinic_id, is_super_admin');
       if (pErr) throw pErr;
       const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
       if (rErr) throw rErr;
@@ -60,7 +60,7 @@ export default function AdminUsers() {
 
       let result = profiles.map((p) => {
         const roleRow = roles.find((r) => r.user_id === p.id);
-        return { ...p, role: roleRow?.role || 'sin rol', clinicName: p.clinic_id ? clinicMap.get(p.clinic_id) || '' : '' };
+        return { ...p, role: roleRow?.role || 'sin rol', clinicName: p.clinic_id ? clinicMap.get(p.clinic_id) || '' : '', is_super_admin: (p as any).is_super_admin || false };
       });
 
       // If not super admin, only show users from same clinic
@@ -116,7 +116,7 @@ export default function AdminUsers() {
 
   const startEdit = (u: typeof users[0]) => {
     setEditingId(u.id);
-    setEditForm({ name: u.name, role: u.role, specialty: u.specialty || '' });
+    setEditForm({ name: u.name, role: u.role, specialty: u.specialty || '', clinicId: (u as any).clinic_id || '' });
   };
 
   const handleUpdate = async () => {
@@ -131,6 +131,7 @@ export default function AdminUsers() {
         name: editForm.name,
         role: editForm.role,
         specialty: editForm.role === 'consulta' ? editForm.specialty : undefined,
+        clinicId: editForm.clinicId || undefined,
       }),
     });
     const result = await res.json();
@@ -317,6 +318,19 @@ export default function AdminUsers() {
                         </Select>
                       </div>
                     )}
+                    {user?.isSuperAdmin && (
+                      <div>
+                        <Label className="text-xs">Clínica</Label>
+                        <Select value={editForm.clinicId} onValueChange={v => setEditForm({ ...editForm, clinicId: v })}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar clínica" /></SelectTrigger>
+                          <SelectContent>
+                            {clinics.map(c => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleUpdate} disabled={savingEdit} className="gap-1.5">
@@ -355,7 +369,7 @@ export default function AdminUsers() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(u)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    {u.id !== user?.id && (
+                    {u.id !== user?.id && !(u as any).is_super_admin && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">

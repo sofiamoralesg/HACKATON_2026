@@ -64,6 +64,19 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Prevent deleting super admin
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", userId)
+        .single();
+
+      if (targetProfile?.is_super_admin) {
+        return new Response(JSON.stringify({ error: "No se puede eliminar al super administrador" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { error: surgeriesError } = await adminClient
         .from("surgeries")
         .update({ created_by: null })
@@ -113,7 +126,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { userId, name, role, specialty } = await req.json();
+      const { userId, name, role, specialty, clinicId } = await req.json();
       if (!userId || !name || !role) {
         return new Response(JSON.stringify({ error: "Faltan campos requeridos" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -126,15 +139,38 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update profile
-      await adminClient.from("profiles").update({
+      // Check if caller is super admin
+      const { data: callerProfile } = await adminClient
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", caller.id)
+        .single();
+
+      // Prevent editing super admin's role
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("is_super_admin")
+        .eq("id", userId)
+        .single();
+
+      // Build profile update
+      const profileUpdate: Record<string, unknown> = {
         name,
         specialty: role === "consulta" ? (specialty || null) : null,
-      }).eq("id", userId);
+      };
 
-      // Update role - delete old and insert new
-      await adminClient.from("user_roles").delete().eq("user_id", userId);
-      await adminClient.from("user_roles").insert({ user_id: userId, role });
+      // Only super admin can change clinic_id
+      if (callerProfile?.is_super_admin && clinicId !== undefined) {
+        profileUpdate.clinic_id = clinicId || null;
+      }
+
+      await adminClient.from("profiles").update(profileUpdate).eq("id", userId);
+
+      // Update role - delete old and insert new (skip if target is super admin)
+      if (!targetProfile?.is_super_admin) {
+        await adminClient.from("user_roles").delete().eq("user_id", userId);
+        await adminClient.from("user_roles").insert({ user_id: userId, role });
+      }
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
