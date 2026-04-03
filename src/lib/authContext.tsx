@@ -59,16 +59,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
-        // Use setTimeout to avoid potential deadlock with Supabase auth
         setTimeout(async () => {
           if (!mounted) return;
           const appUser = await loadAppUser(session.user.id);
-          if (mounted) {
+          if (mounted && appUser) {
             setUser(appUser);
-            setLoading(false);
           }
+          if (mounted) setLoading(false);
         }, 0);
-      } else {
+      } else if (event !== 'INITIAL_SESSION') {
         setUser(null);
         setLoading(false);
       }
