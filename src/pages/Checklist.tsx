@@ -81,13 +81,19 @@ export default function Checklist() {
   }
 
   const allSignInAnswered = signInAnswers.every((q) => q.answer !== null);
+  const signInFollowUpsOk = signInAnswers.every((q) => {
+    if (q.followUpText && q.answer === 'si') {
+      return q.followUpAnswer === 'si';
+    }
+    return true;
+  });
   const allTimeOutAnswered = timeOutAnswers.every((q) => q.answer !== null);
   const usedInstruments = instruments.filter((i) => i.initialCount > 0);
   const allSignOutAnswered = signOutAnswers.every((q) => q.answer !== null);
   const instrumentsMatch = finalInstruments.length > 0 && finalInstruments.every((i) => i.finalCount === i.initialCount);
 
   const canAdvance = () => {
-    if (currentMoment === 0) return allSignInAnswered;
+    if (currentMoment === 0) return allSignInAnswered && signInFollowUpsOk;
     if (currentMoment === 1) return allTimeOutAnswered && usedInstruments.length > 0;
     if (currentMoment === 2) return allSignOutAnswered && instrumentsMatch;
     return true;
@@ -95,7 +101,13 @@ export default function Checklist() {
 
   const handleAnswer = (list: ChecklistQuestion[], setList: React.Dispatch<React.SetStateAction<ChecklistQuestion[]>>, questionId: string, answer: 'si' | 'no') => {
     setList(list.map((q) =>
-      q.id === questionId ? { ...q, answer, answeredBy: user?.name, answeredAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) } : q
+      q.id === questionId ? { ...q, answer, followUpAnswer: answer === 'no' ? null : q.followUpAnswer, answeredBy: user?.name, answeredAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) } : q
+    ));
+  };
+
+  const handleFollowUpAnswer = (list: ChecklistQuestion[], setList: React.Dispatch<React.SetStateAction<ChecklistQuestion[]>>, questionId: string, answer: 'si' | 'no') => {
+    setList(list.map((q) =>
+      q.id === questionId ? { ...q, followUpAnswer: answer } : q
     ));
   };
 
@@ -111,14 +123,27 @@ export default function Checklist() {
 
     // Save answers
     if (questions.length > 0) {
-      const answers = questions.map((q) => ({
-        phase_id: phaseRow.id,
-        question_id: q.id,
-        question_text: q.text,
-        answer: q.answer || null,
-        answered_by: q.answeredBy || null,
-        answered_at: q.answeredAt ? new Date().toISOString() : null,
-      }));
+      const answers = questions.flatMap((q) => {
+        const rows = [{
+          phase_id: phaseRow.id,
+          question_id: q.id,
+          question_text: q.text,
+          answer: q.answer || null,
+          answered_by: q.answeredBy || null,
+          answered_at: q.answeredAt ? new Date().toISOString() : null,
+        }];
+        if (q.followUpText && q.answer === 'si') {
+          rows.push({
+            phase_id: phaseRow.id,
+            question_id: q.id + '-followup',
+            question_text: q.followUpText,
+            answer: q.followUpAnswer || null,
+            answered_by: q.answeredBy || null,
+            answered_at: q.answeredAt ? new Date().toISOString() : null,
+          });
+        }
+        return rows;
+      });
       const { error: ansErr } = await supabase.from('checklist_answers').insert(answers);
       if (ansErr) throw ansErr;
     }
@@ -231,7 +256,7 @@ export default function Checklist() {
         <p className="text-muted-foreground">{moments[currentMoment].subtitle}</p>
       </motion.div>
 
-      {currentMoment === 0 && <ChecklistSignIn questions={signInAnswers} onAnswer={(qId, ans) => handleAnswer(signInAnswers, setSignInAnswers, qId, ans)} patientName={surgery.patient} patientId={(surgery as any).patient_id || undefined} />}
+      {currentMoment === 0 && <ChecklistSignIn questions={signInAnswers} onAnswer={(qId, ans) => handleAnswer(signInAnswers, setSignInAnswers, qId, ans)} onFollowUpAnswer={(qId, ans) => handleFollowUpAnswer(signInAnswers, setSignInAnswers, qId, ans)} patientName={surgery.patient} patientId={(surgery as any).patient_id || undefined} />}
       {currentMoment === 1 && <ChecklistTimeOut questions={timeOutAnswers} onAnswer={(qId, ans) => handleAnswer(timeOutAnswers, setTimeOutAnswers, qId, ans)} instruments={instruments} onUpdateInstruments={setInstruments} />}
       {currentMoment === 2 && <ChecklistSignOut questions={signOutAnswers} onAnswer={(qId, ans) => handleAnswer(signOutAnswers, setSignOutAnswers, qId, ans)} instruments={finalInstruments} onUpdateFinalCount={(instId, count) => setFinalInstruments((prev) => prev.map((i) => i.id === instId ? { ...i, finalCount: count } : i))} />}
       {currentMoment === 3 && <ChecklistSignature userName={user?.name || ''} userRole={user?.role || ''} startTime={startTime} endTime={new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} onAccept={handleComplete} />}
