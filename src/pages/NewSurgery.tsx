@@ -53,6 +53,7 @@ export default function NewSurgery() {
     setSubmitting(true);
     const { error } = await supabase.from('surgeries').insert({
       patient: form.patient,
+      patient_id: form.patientId || null,
       procedure_name: form.procedure,
       room: form.room,
       date: form.date,
