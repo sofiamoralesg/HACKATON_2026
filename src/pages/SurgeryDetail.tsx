@@ -37,7 +37,7 @@ export default function SurgeryDetail() {
   });
 
   const [editForm, setEditForm] = useState({
-    patient: '', procedure_name: '', room: '', date: '', time: '',
+    patient: '', patient_id: '', procedure_name: '', room: '', date: '', time: '',
     surgeon: '', anesthesiologist: '', checklist_owner: '',
   });
 
@@ -113,6 +113,7 @@ export default function SurgeryDetail() {
     if (!surgery) return;
     setEditForm({
       patient: surgery.patient,
+      patient_id: (surgery as any).patient_id || '',
       procedure_name: surgery.procedure_name,
       room: surgery.room,
       date: surgery.date,
@@ -128,6 +129,7 @@ export default function SurgeryDetail() {
     setSaving(true);
     const { error } = await supabase.from('surgeries').update({
       patient: editForm.patient,
+      patient_id: editForm.patient_id || null,
       procedure_name: editForm.procedure_name,
       room: editForm.room,
       date: editForm.date,
@@ -227,9 +229,13 @@ export default function SurgeryDetail() {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 rounded-xl border bg-card p-6 space-y-4">
             <h3 className="font-semibold text-foreground">Editar Cirugía</h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+              <div>
                 <Label>Paciente</Label>
                 <Input className="mt-1.5" value={editForm.patient} onChange={e => setEditForm({ ...editForm, patient: e.target.value })} />
+              </div>
+              <div>
+                <Label>Identificación</Label>
+                <Input className="mt-1.5" placeholder="Cédula o ID" value={editForm.patient_id} onChange={e => setEditForm({ ...editForm, patient_id: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
                 <Label>Procedimiento</Label>
