@@ -137,6 +137,10 @@ export default function AdminClinics() {
               <Label>Dirección</Label>
               <Input placeholder="Calle 100 #15-20" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} required />
             </div>
+            <div className="space-y-1.5">
+              <Label>Número de Quirófanos</Label>
+              <Input type="number" min="1" max="50" placeholder="4" value={form.num_operating_rooms} onChange={e => setForm({ ...form, num_operating_rooms: e.target.value })} required />
+            </div>
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
               <Button type="submit" disabled={submitting} className="gap-2">
