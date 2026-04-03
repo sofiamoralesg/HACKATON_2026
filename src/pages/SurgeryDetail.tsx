@@ -129,6 +129,7 @@ export default function SurgeryDetail() {
     setSaving(true);
     const { error } = await supabase.from('surgeries').update({
       patient: editForm.patient,
+      patient_id: editForm.patient_id || null,
       procedure_name: editForm.procedure_name,
       room: editForm.room,
       date: editForm.date,
