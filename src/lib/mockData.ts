@@ -8,6 +8,7 @@ export interface ChecklistQuestion {
   answeredAt?: string;
   followUpText?: string;
   followUpAnswer?: 'si' | 'no' | null;
+  blockOnNo?: boolean;
 }
 
 export interface InstrumentCount {
