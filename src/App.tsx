@@ -12,6 +12,7 @@ import Checklist from "./pages/Checklist";
 import NewSurgery from "./pages/NewSurgery";
 import History from "./pages/History";
 import SurgeryDetail from "./pages/SurgeryDetail";
+import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
