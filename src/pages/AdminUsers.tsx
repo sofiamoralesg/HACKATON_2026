@@ -318,6 +318,19 @@ export default function AdminUsers() {
                         </Select>
                       </div>
                     )}
+                    {user?.isSuperAdmin && (
+                      <div>
+                        <Label className="text-xs">Clínica</Label>
+                        <Select value={editForm.clinicId} onValueChange={v => setEditForm({ ...editForm, clinicId: v })}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="Seleccionar clínica" /></SelectTrigger>
+                          <SelectContent>
+                            {clinics.map(c => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleUpdate} disabled={savingEdit} className="gap-1.5">
