@@ -13,7 +13,8 @@ import { motion } from 'framer-motion';
 import type { UserRole } from '@/lib/authContext';
 
 const roleLabels: Record<string, string> = {
-  coordinador: 'Coordinador / Admin',
+  supervisor: 'Supervisor',
+  coordinador: 'Coordinador',
   encargado: 'Encargado del Checklist',
   consulta: 'Acceso de Consulta',
 };
