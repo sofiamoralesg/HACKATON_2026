@@ -75,7 +75,7 @@ export const commonInstruments = [
 export const signInQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
   { id: 'si1', text: '¿Ha confirmado el paciente su identidad, el sitio quirúrgico, el procedimiento y su consentimiento?', blockOnNo: true },
   { id: 'si2', text: '¿Se ha marcado el sitio quirúrgico? (Sí / No procede)', blockOnNo: true },
-  { id: 'si3', text: '¿Se ha completado la comprobación de los aparatos de anestesia y la medicación anestésica?' },
+  { id: 'si3', text: '¿Se ha completado la comprobación de los aparatos de anestesia y la medicación anestésica?', blockOnNo: true },
   { id: 'si4', text: '¿Se ha colocado el pulsioxímetro al paciente y funciona?', blockOnNo: true },
   { id: 'si5', text: '¿Tiene el paciente alergias conocidas?', followUpText: '¿Son conocidas y tenidas en cuenta?' },
   { id: 'si6', text: '¿Tiene el paciente vía aérea difícil / riesgo de aspiración?', followUpText: '¿Hay materiales, equipos y ayuda disponible?' },
