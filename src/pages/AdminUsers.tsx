@@ -54,9 +54,13 @@ export default function AdminUsers() {
       const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
       if (rErr) throw rErr;
 
+      // Load clinics for name mapping
+      const { data: allClinics } = await supabase.from('clinics').select('id, name');
+      const clinicMap = new Map((allClinics || []).map(c => [c.id, c.name]));
+
       let result = profiles.map((p) => {
         const roleRow = roles.find((r) => r.user_id === p.id);
-        return { ...p, role: roleRow?.role || 'sin rol' };
+        return { ...p, role: roleRow?.role || 'sin rol', clinicName: p.clinic_id ? clinicMap.get(p.clinic_id) || '' : '' };
       });
 
       // If not super admin, only show users from same clinic
@@ -77,7 +81,7 @@ export default function AdminUsers() {
     e.preventDefault();
     if (!form.role) { toast.error('Selecciona un rol'); return; }
     if (form.role === 'consulta' && !form.specialty) { toast.error('Selecciona una especialidad'); return; }
-    if (user?.isSuperAdmin && form.role === 'supervisor' && !form.clinicId) { toast.error('Selecciona una clínica para el supervisor'); return; }
+    if (user?.isSuperAdmin && !form.clinicId) { toast.error('Selecciona una clínica'); return; }
     setSubmitting(true);
 
     const token = await getToken();
@@ -225,7 +229,7 @@ export default function AdminUsers() {
               </Select>
             </div>
 
-            {user?.isSuperAdmin && form.role === 'supervisor' && (
+            {user?.isSuperAdmin && (
               <div className="space-y-1.5">
                 <Label>Clínica</Label>
                 <Select value={form.clinicId} onValueChange={(v) => setForm({ ...form, clinicId: v })}>
@@ -270,10 +274,11 @@ export default function AdminUsers() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
+          <div className={`grid gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground ${user?.isSuperAdmin ? 'grid-cols-[1fr_1fr_auto_auto_auto_auto]' : 'grid-cols-[1fr_1fr_auto_auto_auto]'}`}>
             <span>Nombre</span>
             <span>Correo</span>
             <span>Rol</span>
+            {user?.isSuperAdmin && <span>Clínica</span>}
             <span>Fecha</span>
             <span>Acciones</span>
           </div>
@@ -323,7 +328,7 @@ export default function AdminUsers() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] items-center gap-4 px-5 py-4">
+                <div className={`grid items-center gap-4 px-5 py-4 ${user?.isSuperAdmin ? 'grid-cols-[1fr_1fr_auto_auto_auto_auto]' : 'grid-cols-[1fr_1fr_auto_auto_auto]'}`}>
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                       <User className="h-4 w-4 text-primary" />
@@ -342,6 +347,9 @@ export default function AdminUsers() {
                       <span className="text-xs text-muted-foreground capitalize ml-1">{u.specialty === 'anestesiologo' ? 'Anestesiólogo' : u.specialty === 'cirujano' ? 'Cirujano' : 'Otro'}</span>
                     )}
                   </div>
+                  {user?.isSuperAdmin && (
+                    <span className="text-xs text-muted-foreground">{(u as any).clinicName || '—'}</span>
+                  )}
                   <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('es-ES')}</span>
                   <div className="flex gap-1.5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(u)}>

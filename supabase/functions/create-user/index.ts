@@ -83,14 +83,14 @@ Deno.serve(async (req) => {
     // Determine clinic_id for the new user
     let assignedClinicId: string | null = null;
     if (callerProfile?.is_super_admin) {
-      // Super admin must specify clinic for supervisors
-      if (role === "supervisor" && !clinicId) {
-        return new Response(JSON.stringify({ error: "Debe asignar una clínica al supervisor" }), {
+      // Super admin must specify clinic for all users
+      if (!clinicId) {
+        return new Response(JSON.stringify({ error: "Debe asignar una clínica al usuario" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      assignedClinicId = clinicId || callerProfile.clinic_id;
+      assignedClinicId = clinicId;
     } else {
       // Regular supervisor assigns their own clinic
       assignedClinicId = callerProfile?.clinic_id || null;
