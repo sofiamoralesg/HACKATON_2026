@@ -41,6 +41,7 @@ const App = () => (
             <Route path="/nueva-cirugia" element={<ProtectedRoute><NewSurgery /></ProtectedRoute>} />
             <Route path="/historial" element={<ProtectedRoute><History /></ProtectedRoute>} />
             <Route path="/cirugia/:id" element={<ProtectedRoute><SurgeryDetail /></ProtectedRoute>} />
+            <Route path="/admin/usuarios" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
