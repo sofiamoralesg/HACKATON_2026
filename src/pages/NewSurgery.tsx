@@ -87,9 +87,13 @@ export default function NewSurgery() {
 
         <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border bg-card p-6">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <div>
               <Label>Nombre del Paciente</Label>
               <Input className="mt-1.5" placeholder="Nombre completo" value={form.patient} onChange={(e) => setForm({ ...form, patient: e.target.value })} required />
+            </div>
+            <div>
+              <Label>Identificación del Paciente</Label>
+              <Input className="mt-1.5" placeholder="Cédula o ID" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} />
             </div>
             <div className="sm:col-span-2">
               <Label>Procedimiento</Label>

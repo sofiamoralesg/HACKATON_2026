@@ -229,9 +229,13 @@ export default function SurgeryDetail() {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 rounded-xl border bg-card p-6 space-y-4">
             <h3 className="font-semibold text-foreground">Editar Cirugía</h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
+              <div>
                 <Label>Paciente</Label>
                 <Input className="mt-1.5" value={editForm.patient} onChange={e => setEditForm({ ...editForm, patient: e.target.value })} />
+              </div>
+              <div>
+                <Label>Identificación</Label>
+                <Input className="mt-1.5" placeholder="Cédula o ID" value={editForm.patient_id} onChange={e => setEditForm({ ...editForm, patient_id: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
                 <Label>Procedimiento</Label>
