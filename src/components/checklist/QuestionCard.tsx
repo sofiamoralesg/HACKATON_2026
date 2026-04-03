@@ -14,6 +14,7 @@ export default function QuestionCard({ question, onAnswer, onFollowUpAnswer, ind
   const hasFollowUp = !!question.followUpText;
   const showFollowUp = hasFollowUp && question.answer === 'si';
   const followUpBlocked = showFollowUp && question.followUpAnswer === 'no';
+  const blockingNo = question.blockOnNo && question.answer === 'no';
 
   return (
     <motion.div
