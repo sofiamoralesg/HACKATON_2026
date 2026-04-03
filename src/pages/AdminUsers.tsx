@@ -369,7 +369,7 @@ export default function AdminUsers() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(u)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    {u.id !== user?.id && (
+                    {u.id !== user?.id && !(u as any).is_super_admin && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
