@@ -43,6 +43,16 @@ export default function NewSurgery() {
       return profiles || [];
     },
   });
+  const { data: clinicData } = useQuery({
+    queryKey: ['clinic-rooms', user?.clinicId],
+    queryFn: async () => {
+      if (!user?.clinicId) return null;
+      const { data } = await supabase.from('clinics').select('num_operating_rooms').eq('id', user.clinicId).single();
+      return data;
+    },
+    enabled: !!user?.clinicId,
+  });
+  const clinicRooms = (clinicData as any)?.num_operating_rooms || 4;
 
   const surgeonsList = consultaUsers.filter(u => u.specialty === 'cirujano').map(u => u.name);
   const anesthesiologistsList = consultaUsers.filter(u => u.specialty === 'anestesiologo').map(u => u.name);
