@@ -64,7 +64,7 @@ export default function AdminUsers() {
 
     if (result.success) {
       toast.success(`Usuario ${form.name} creado exitosamente`);
-      setForm({ email: '', password: '', name: '', role: '' });
+      setForm({ email: '', password: '', name: '', role: '', specialty: '' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } else {
