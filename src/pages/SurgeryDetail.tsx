@@ -257,7 +257,14 @@ export default function SurgeryDetail() {
               </div>
               <div>
                 <Label>Sala</Label>
-                <Input className="mt-1.5" value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })} />
+                <Select value={editForm.room} onValueChange={v => setEditForm({ ...editForm, room: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: clinicRooms }, (_, i) => `Quirófano ${i + 1}`).map(r => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Fecha</Label>
