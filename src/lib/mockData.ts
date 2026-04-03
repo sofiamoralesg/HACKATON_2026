@@ -95,8 +95,8 @@ export const timeOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' |
 
 // WHO Surgical Safety Checklist — Sign Out (Before patient leaves OR)
 export const signOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
-  { id: 'so2', text: 'El enfermero confirma verbalmente: el recuento de instrumentos, gasas y agujas', blockOnNo: true },
-  { id: 'so3', text: 'El enfermero confirma verbalmente: el etiquetado de las muestras (lectura de la etiqueta en voz alta, incluido el nombre del paciente)', blockOnNo: true },
+  { id: 'so2', text: 'Se confirma verbalmente: el recuento de instrumentos, gasas y agujas', blockOnNo: true },
+  { id: 'so3', text: 'Se confirma verbalmente: el etiquetado de las muestras (lectura de la etiqueta en voz alta, incluido el nombre del paciente)', blockOnNo: true },
   { id: 'so4', text: '¿Hay problemas que resolver relacionados con el instrumental y los equipos?', blockOnNo: true },
 ];
 

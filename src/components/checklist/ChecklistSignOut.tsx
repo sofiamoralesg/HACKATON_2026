@@ -14,14 +14,7 @@ interface Props {
 export default function ChecklistSignOut({ questions, onAnswer, instruments, onUpdateFinalCount }: Props) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      {/* Questions */}
-      <div className="space-y-3">
-        {questions.map((q, i) => (
-          <QuestionCard key={q.id} question={q} onAnswer={onAnswer} index={i} />
-        ))}
-      </div>
-
-      {/* Instrument comparison table */}
+      {/* Instrument comparison table FIRST */}
       <div className="rounded-xl border bg-card p-5">
         <h3 className="text-lg font-semibold text-foreground mb-4">Verificación de Instrumentos</h3>
         <p className="text-sm text-muted-foreground mb-4">
@@ -65,6 +58,13 @@ export default function ChecklistSignOut({ questions, onAnswer, instruments, onU
             Las cantidades no coinciden. Verifica el conteo antes de continuar.
           </div>
         )}
+      </div>
+
+      {/* Questions AFTER instrument count */}
+      <div className="space-y-3">
+        {questions.map((q, i) => (
+          <QuestionCard key={q.id} question={q} onAnswer={onAnswer} index={i} />
+        ))}
       </div>
     </motion.div>
   );
