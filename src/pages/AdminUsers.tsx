@@ -274,10 +274,11 @@ export default function AdminUsers() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
+          <div className={`grid gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground ${user?.isSuperAdmin ? 'grid-cols-[1fr_1fr_auto_auto_auto_auto]' : 'grid-cols-[1fr_1fr_auto_auto_auto]'}`}>
             <span>Nombre</span>
             <span>Correo</span>
             <span>Rol</span>
+            {user?.isSuperAdmin && <span>Clínica</span>}
             <span>Fecha</span>
             <span>Acciones</span>
           </div>
