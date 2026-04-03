@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SearchableSelect from '@/components/SearchableSelect';
 import { ArrowLeft, CheckCircle2, XCircle, Clock, User, MapPin, Shield, Wrench, Loader2, Pencil, Trash2, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -68,6 +69,17 @@ export default function SurgeryDetail() {
   const surgeonsList = consultaUsers.filter(u => u.specialty === 'cirujano').map(u => u.name);
   const anesthesiologistsList = consultaUsers.filter(u => u.specialty === 'anestesiologo').map(u => u.name);
   const encargadosList = encargadoUsers.map(u => u.name);
+
+  const { data: clinicData } = useQuery({
+    queryKey: ['clinic-rooms', user?.clinicId],
+    queryFn: async () => {
+      if (!user?.clinicId) return null;
+      const { data } = await supabase.from('clinics').select('num_operating_rooms').eq('id', user.clinicId).single();
+      return data;
+    },
+    enabled: !!user?.clinicId,
+  });
+  const clinicRooms = (clinicData as any)?.num_operating_rooms || 4;
 
   const { data: phases = [] } = useQuery({
     queryKey: ['phases', id],
@@ -245,7 +257,14 @@ export default function SurgeryDetail() {
               </div>
               <div>
                 <Label>Sala</Label>
-                <Input className="mt-1.5" value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })} />
+                <Select value={editForm.room} onValueChange={v => setEditForm({ ...editForm, room: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: clinicRooms }, (_, i) => `Quirófano ${i + 1}`).map(r => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Fecha</Label>
