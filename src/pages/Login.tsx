@@ -6,7 +6,6 @@ import { Shield, UserCog, ClipboardCheck, Eye, ArrowLeft, Mail, Lock, AlertCircl
 import type { UserRole } from '@/lib/authContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 const roles: { role: UserRole; label: string; desc: string; icon: typeof Shield }[] = [
   { role: 'supervisor', label: 'Supervisor', desc: 'Administra usuarios del sistema. Crea cuentas y asigna roles.', icon: Shield },
@@ -17,14 +16,13 @@ const roles: { role: UserRole; label: string; desc: string; icon: typeof Shield 
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, resetPassword, user, loading } = useAuth();
+  const { login, user, loading } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Redirect when user is authenticated
   useEffect(() => {
     if (user) {
       const dest = user.role === 'supervisor' ? '/admin/usuarios' : '/dashboard';
@@ -37,29 +35,13 @@ export default function Login() {
     if (!selectedRole) return;
     setError('');
     setSubmitting(true);
-
     try {
       const result = await login(email, password, selectedRole);
-      if (!result.success) {
-        setError(result.error || 'Error al iniciar sesión');
-      }
-    } catch (err) {
+      if (!result.success) setError(result.error || 'Error al iniciar sesión');
+    } catch {
       setError('Error de conexión. Intenta de nuevo.');
     }
     setSubmitting(false);
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email) {
-      toast.error('Ingresa tu correo electrónico primero.');
-      return;
-    }
-    const result = await resetPassword(email);
-    if (result.success) {
-      toast.success('Se ha enviado un enlace de recuperación a tu correo.');
-    } else {
-      toast.error(result.error || 'Error al enviar el enlace.');
-    }
   };
 
   if (loading) {
@@ -153,10 +135,6 @@ export default function Login() {
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
                   Iniciar Sesión
                 </Button>
-
-                <button type="button" onClick={handleForgotPassword} className="w-full text-center text-sm text-primary hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </button>
               </form>
             </motion.div>
           )}

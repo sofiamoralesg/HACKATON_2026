@@ -21,21 +21,25 @@ export default function NewSurgery() {
   });
 
   const { data: consultaUsers = [] } = useQuery({
-    queryKey: ['consulta-users'],
+    queryKey: ['consulta-users', user?.clinicId],
     queryFn: async () => {
       const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'consulta');
       if (!roles || roles.length === 0) return [];
-      const { data: profiles } = await supabase.from('profiles').select('id, name, specialty').in('id', roles.map(r => r.user_id));
+      let query = supabase.from('profiles').select('id, name, specialty, clinic_id').in('id', roles.map(r => r.user_id));
+      if (user?.clinicId) query = query.eq('clinic_id', user.clinicId);
+      const { data: profiles } = await query;
       return profiles || [];
     },
   });
 
   const { data: encargadoUsers = [] } = useQuery({
-    queryKey: ['encargado-users'],
+    queryKey: ['encargado-users', user?.clinicId],
     queryFn: async () => {
       const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'encargado');
       if (!roles || roles.length === 0) return [];
-      const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', roles.map(r => r.user_id));
+      let query = supabase.from('profiles').select('id, name, clinic_id').in('id', roles.map(r => r.user_id));
+      if (user?.clinicId) query = query.eq('clinic_id', user.clinicId);
+      const { data: profiles } = await query;
       return profiles || [];
     },
   });
@@ -62,6 +66,7 @@ export default function NewSurgery() {
       anesthesiologist: form.anesthesiologist,
       checklist_owner: form.checklistOwner,
       created_by: user?.id,
+      clinic_id: user?.clinicId || null,
     });
     if (error) {
       toast.error('Error al programar la cirugía: ' + error.message);

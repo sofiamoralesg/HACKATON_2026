@@ -20,13 +20,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const { data: surgeries = [], isLoading } = useQuery({
-    queryKey: ['surgeries'],
+    queryKey: ['surgeries', user?.clinicId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('surgeries')
         .select('*')
         .order('date', { ascending: false })
         .order('time', { ascending: true });
+      if (user?.clinicId) query = query.eq('clinic_id', user.clinicId);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

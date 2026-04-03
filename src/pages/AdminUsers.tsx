@@ -14,7 +14,6 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import type { UserRole } from '@/lib/authContext';
 
 const roleLabels: Record<string, string> = {
   supervisor: 'Supervisor',
@@ -29,26 +28,43 @@ export default function AdminUsers() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: '', password: '', name: '', role: '' as string, specialty: '' as string });
+  const [form, setForm] = useState({ email: '', password: '', name: '', role: '', specialty: '', clinicId: '' });
 
-  // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: '', specialty: '' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Load clinics for super admin
+  const { data: clinics = [] } = useQuery({
+    queryKey: ['clinics'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('clinics').select('*').order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.isSuperAdmin,
+  });
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at, specialty');
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, name, email, created_at, specialty, clinic_id');
       if (pErr) throw pErr;
       const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
       if (rErr) throw rErr;
 
-      return profiles.map((p) => {
+      let result = profiles.map((p) => {
         const roleRow = roles.find((r) => r.user_id === p.id);
         return { ...p, role: roleRow?.role || 'sin rol' };
       });
+
+      // If not super admin, only show users from same clinic
+      if (!user?.isSuperAdmin && user?.clinicId) {
+        result = result.filter(u => (u as any).clinic_id === user.clinicId);
+      }
+
+      return result;
     },
   });
 
@@ -61,19 +77,31 @@ export default function AdminUsers() {
     e.preventDefault();
     if (!form.role) { toast.error('Selecciona un rol'); return; }
     if (form.role === 'consulta' && !form.specialty) { toast.error('Selecciona una especialidad'); return; }
+    if (user?.isSuperAdmin && form.role === 'supervisor' && !form.clinicId) { toast.error('Selecciona una clínica para el supervisor'); return; }
     setSubmitting(true);
 
     const token = await getToken();
+    const body: Record<string, string | undefined> = {
+      email: form.email,
+      password: form.password,
+      name: form.name,
+      role: form.role,
+      specialty: form.role === 'consulta' ? form.specialty : undefined,
+    };
+    if (user?.isSuperAdmin && form.clinicId) {
+      body.clinicId = form.clinicId;
+    }
+
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ ...form, specialty: form.role === 'consulta' ? form.specialty : undefined }),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
     });
 
     const result = await res.json();
     if (result.success) {
       toast.success(`Usuario ${form.name} creado exitosamente`);
-      setForm({ email: '', password: '', name: '', role: '', specialty: '' });
+      setForm({ email: '', password: '', name: '', role: '', specialty: '', clinicId: '' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } else {
@@ -93,7 +121,7 @@ export default function AdminUsers() {
     const token = await getToken();
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user?action=update`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         userId: editingId,
         name: editForm.name,
@@ -117,7 +145,7 @@ export default function AdminUsers() {
     const token = await getToken();
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user?action=delete`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ userId }),
     });
     const result = await res.json();
@@ -134,6 +162,11 @@ export default function AdminUsers() {
     return <Layout><p className="text-destructive font-medium">No tienes permisos para ver esta página.</p></Layout>;
   }
 
+  // Available roles depend on super admin status
+  const availableRoles = user?.isSuperAdmin
+    ? ['supervisor', 'coordinador', 'encargado', 'consulta']
+    : ['coordinador', 'encargado', 'consulta'];
+
   return (
     <Layout>
       <div className="mb-6 flex items-center justify-between">
@@ -142,8 +175,7 @@ export default function AdminUsers() {
           <p className="text-sm text-muted-foreground">Crea y administra los usuarios del sistema</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Nuevo Usuario
+          <UserPlus className="h-4 w-4" /> Nuevo Usuario
         </Button>
       </div>
 
@@ -183,16 +215,29 @@ export default function AdminUsers() {
 
             <div className="space-y-1.5">
               <Label>Rol</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v, specialty: '' })}>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v, specialty: '', clinicId: '' })}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="supervisor">Supervisor</SelectItem>
-                  <SelectItem value="coordinador">Coordinador</SelectItem>
-                  <SelectItem value="encargado">Encargado del Checklist</SelectItem>
-                  <SelectItem value="consulta">Acceso de Consulta</SelectItem>
+                  {availableRoles.map(r => (
+                    <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {user?.isSuperAdmin && form.role === 'supervisor' && (
+              <div className="space-y-1.5">
+                <Label>Clínica</Label>
+                <Select value={form.clinicId} onValueChange={(v) => setForm({ ...form, clinicId: v })}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar clínica" /></SelectTrigger>
+                  <SelectContent>
+                    {clinics.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {form.role === 'consulta' && (
               <div className="space-y-1.5">
@@ -248,10 +293,9 @@ export default function AdminUsers() {
                       <Select value={editForm.role} onValueChange={v => setEditForm({ ...editForm, role: v, specialty: '' })}>
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="supervisor">Supervisor</SelectItem>
-                          <SelectItem value="coordinador">Coordinador</SelectItem>
-                          <SelectItem value="encargado">Encargado del Checklist</SelectItem>
-                          <SelectItem value="consulta">Acceso de Consulta</SelectItem>
+                          {availableRoles.map(r => (
+                            <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -271,8 +315,7 @@ export default function AdminUsers() {
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleUpdate} disabled={savingEdit} className="gap-1.5">
-                      {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                      Guardar
+                      {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Guardar
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="gap-1.5">
                       <X className="h-3.5 w-3.5" /> Cancelar
@@ -314,9 +357,7 @@ export default function AdminUsers() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>¿Eliminar a {u.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción eliminará permanentemente al usuario y todos sus datos asociados.
-                            </AlertDialogDescription>
+                            <AlertDialogDescription>Esta acción eliminará permanentemente al usuario.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
