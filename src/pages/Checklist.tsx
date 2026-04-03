@@ -2,16 +2,21 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/authContext';
 import Layout from '@/components/Layout';
-import { mockSurgeries, signInItems, timeOutItems, signOutItems, ChecklistItem } from '@/lib/mockData';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, CheckCircle2, Circle, AlertTriangle, ArrowRight, ArrowLeft, User, MapPin, Clock } from 'lucide-react';
+import { mockSurgeries, signInQuestions, timeOutQuestions, signOutQuestions, commonInstruments, ChecklistQuestion, InstrumentCount } from '@/lib/mockData';
+import ChecklistSignIn from '@/components/checklist/ChecklistSignIn';
+import ChecklistTimeOut from '@/components/checklist/ChecklistTimeOut';
+import ChecklistSignOut from '@/components/checklist/ChecklistSignOut';
+import ChecklistSignature from '@/components/checklist/ChecklistSignature';
+import { motion } from 'framer-motion';
+import { CheckCircle2, MapPin, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 const moments = [
-  { key: 'sign-in', label: 'Sign In', subtitle: 'Antes de la anestesia', color: 'bg-primary', items: signInItems },
-  { key: 'time-out', label: 'Time Out', subtitle: 'Antes de la incisión', color: 'bg-warning', items: timeOutItems },
-  { key: 'sign-out', label: 'Sign Out', subtitle: 'Antes de cerrar', color: 'bg-accent', items: signOutItems },
+  { key: 'sign-in', label: 'Sign In', subtitle: 'Antes de la anestesia' },
+  { key: 'time-out', label: 'Time Out', subtitle: 'Antes de la incisión' },
+  { key: 'sign-out', label: 'Sign Out', subtitle: 'Antes de cerrar' },
+  { key: 'signature', label: 'Firma', subtitle: 'Firma electrónica' },
 ];
 
 export default function Checklist() {
@@ -21,45 +26,55 @@ export default function Checklist() {
   const surgery = mockSurgeries.find((s) => s.id === id);
 
   const [currentMoment, setCurrentMoment] = useState(0);
-  const [items, setItems] = useState<ChecklistItem[][]>(moments.map((m) => m.items.map((i) => ({ ...i }))));
-  const [completed, setCompleted] = useState([false, false, false]);
+  const [completed, setCompleted] = useState([false, false, false, false]);
+  const [startTime] = useState(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+
+  // Sign In state
+  const [signInAnswers, setSignInAnswers] = useState<ChecklistQuestion[]>(
+    signInQuestions.map((q) => ({ ...q, answer: null }))
+  );
+
+  // Time Out state
+  const [timeOutAnswers, setTimeOutAnswers] = useState<ChecklistQuestion[]>(
+    timeOutQuestions.map((q) => ({ ...q, answer: null }))
+  );
+  const [instruments, setInstruments] = useState<InstrumentCount[]>(
+    commonInstruments.map((name, i) => ({ id: `inst-${i}`, name, initialCount: 0 }))
+  );
+
+  // Sign Out state
+  const [signOutAnswers, setSignOutAnswers] = useState<ChecklistQuestion[]>(
+    signOutQuestions.map((q) => ({ ...q, answer: null }))
+  );
+  const [finalInstruments, setFinalInstruments] = useState<InstrumentCount[]>([]);
 
   if (!surgery) {
     return <Layout><p className="text-muted-foreground">Cirugía no encontrada.</p></Layout>;
   }
 
-  const moment = moments[currentMoment];
-  const currentItems = items[currentMoment];
-  const allConfirmed = currentItems.every((item) => item.confirmed && (!item.hasSubQuestion || item.subConfirmed));
+  const allSignInAnswered = signInAnswers.every((q) => q.answer !== null);
+  const allTimeOutAnswered = timeOutAnswers.every((q) => q.answer !== null);
+  const usedInstruments = instruments.filter((i) => i.initialCount > 0);
 
-  const toggleItem = (itemId: string) => {
-    setItems((prev) => {
-      const copy = prev.map((arr) => arr.map((i) => ({ ...i })));
-      const item = copy[currentMoment].find((i) => i.id === itemId);
-      if (item) {
-        item.confirmed = !item.confirmed;
-        item.confirmedBy = item.confirmed ? user?.name : undefined;
-        item.confirmedAt = item.confirmed ? new Date().toLocaleTimeString('es-ES') : undefined;
-      }
-      return copy;
-    });
+  const allSignOutAnswered = signOutAnswers.every((q) => q.answer !== null);
+  const instrumentsMatch = finalInstruments.length > 0 && finalInstruments.every((i) => i.finalCount === i.initialCount);
+
+  const canAdvance = () => {
+    if (currentMoment === 0) return allSignInAnswered;
+    if (currentMoment === 1) return allTimeOutAnswered && usedInstruments.length > 0;
+    if (currentMoment === 2) return allSignOutAnswered && instrumentsMatch;
+    return true;
   };
 
-  const toggleSubItem = (itemId: string) => {
-    setItems((prev) => {
-      const copy = prev.map((arr) => arr.map((i) => ({ ...i })));
-      const item = copy[currentMoment].find((i) => i.id === itemId);
-      if (item) item.subConfirmed = !item.subConfirmed;
-      return copy;
-    });
+  const handleAnswer = (list: ChecklistQuestion[], setList: React.Dispatch<React.SetStateAction<ChecklistQuestion[]>>, questionId: string, answer: 'si' | 'no') => {
+    setList(list.map((q) =>
+      q.id === questionId ? { ...q, answer, answeredBy: user?.name, answeredAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) } : q
+    ));
   };
 
   const handleNext = () => {
-    if (!allConfirmed) {
-      toast.error('Todos los ítems deben ser confirmados antes de continuar', {
-        description: 'El sistema no permite avanzar sin completar el checklist.',
-        icon: <AlertTriangle className="h-5 w-5" />,
-      });
+    if (!canAdvance()) {
+      toast.error('Debes completar todos los campos antes de continuar.');
       return;
     }
 
@@ -67,13 +82,20 @@ export default function Checklist() {
     newCompleted[currentMoment] = true;
     setCompleted(newCompleted);
 
-    if (currentMoment < 2) {
-      setCurrentMoment(currentMoment + 1);
-      toast.success(`${moment.label} completado`);
-    } else {
-      toast.success('¡Cirugía completada con trazabilidad completa!');
-      navigate('/dashboard');
+    if (currentMoment === 1) {
+      // Prepare instruments for sign-out comparison
+      setFinalInstruments(usedInstruments.map((i) => ({ ...i, finalCount: undefined })));
     }
+
+    if (currentMoment < 3) {
+      setCurrentMoment(currentMoment + 1);
+      toast.success(`${moments[currentMoment].label} completado`);
+    }
+  };
+
+  const handleComplete = () => {
+    toast.success('¡Cirugía completada con trazabilidad completa!');
+    navigate('/dashboard');
   };
 
   return (
@@ -91,7 +113,7 @@ export default function Checklist() {
       </div>
 
       {/* Progress steps */}
-      <div className="mb-8 flex items-center justify-center gap-2">
+      <div className="mb-8 flex items-center justify-center gap-2 flex-wrap">
         {moments.map((m, i) => (
           <div key={m.key} className="flex items-center gap-2">
             <div className={`flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition-all ${
@@ -104,109 +126,73 @@ export default function Checklist() {
               {completed[i] ? <CheckCircle2 className="h-4 w-4" /> : <span className="font-bold">{i + 1}</span>}
               <span className="hidden sm:inline">{m.label}</span>
             </div>
-            {i < 2 && <div className={`h-0.5 w-6 ${completed[i] ? 'bg-success' : 'bg-border'}`} />}
+            {i < 3 && <div className={`h-0.5 w-6 ${completed[i] ? 'bg-success' : 'bg-border'}`} />}
           </div>
         ))}
       </div>
 
       {/* Current moment header */}
-      <motion.div
-        key={currentMoment}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="mb-6"
-      >
-        <h2 className="text-2xl font-bold text-foreground">{moment.label}</h2>
-        <p className="text-muted-foreground">{moment.subtitle}</p>
+      <motion.div key={currentMoment} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
+        <h2 className="text-2xl font-bold text-foreground">{moments[currentMoment].label}</h2>
+        <p className="text-muted-foreground">{moments[currentMoment].subtitle}</p>
       </motion.div>
 
-      {/* Checklist items */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentMoment}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="space-y-3"
-        >
-          {currentItems.map((item, i) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className={`rounded-xl border bg-card p-4 transition-all ${item.confirmed ? 'border-success/30' : ''}`}
-            >
-              <button
-                onClick={() => toggleItem(item.id)}
-                className="flex w-full items-start gap-3 text-left"
-              >
-                {item.confirmed ? (
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
-                ) : (
-                  <Circle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                )}
-                <div className="flex-1">
-                  <p className={`text-sm font-medium ${item.confirmed ? 'text-foreground' : 'text-foreground'}`}>
-                    {item.text}
-                  </p>
-                  {item.confirmedBy && (
-                    <p className="mt-1 flex items-center gap-1 text-xs text-success">
-                      <User className="h-3 w-3" />
-                      {item.confirmedBy} — {item.confirmedAt}
-                    </p>
-                  )}
-                </div>
-              </button>
+      {/* Content by moment */}
+      {currentMoment === 0 && (
+        <ChecklistSignIn
+          questions={signInAnswers}
+          onAnswer={(qId, ans) => handleAnswer(signInAnswers, setSignInAnswers, qId, ans)}
+        />
+      )}
 
-              {item.hasSubQuestion && item.confirmed && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="ml-8 mt-3 border-l-2 border-primary/20 pl-4"
-                >
-                  <button
-                    onClick={() => toggleSubItem(item.id)}
-                    className="flex items-start gap-3 text-left"
-                  >
-                    {item.subConfirmed ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                    ) : (
-                      <Circle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-                    )}
-                    <p className="text-sm text-muted-foreground">{item.subQuestion}</p>
-                  </button>
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
+      {currentMoment === 1 && (
+        <ChecklistTimeOut
+          questions={timeOutAnswers}
+          onAnswer={(qId, ans) => handleAnswer(timeOutAnswers, setTimeOutAnswers, qId, ans)}
+          instruments={instruments}
+          onUpdateInstruments={setInstruments}
+        />
+      )}
+
+      {currentMoment === 2 && (
+        <ChecklistSignOut
+          questions={signOutAnswers}
+          onAnswer={(qId, ans) => handleAnswer(signOutAnswers, setSignOutAnswers, qId, ans)}
+          instruments={finalInstruments}
+          onUpdateFinalCount={(instId, count) => {
+            setFinalInstruments((prev) => prev.map((i) => i.id === instId ? { ...i, finalCount: count } : i));
+          }}
+        />
+      )}
+
+      {currentMoment === 3 && (
+        <ChecklistSignature
+          userName={user?.name || ''}
+          userRole={user?.role || ''}
+          startTime={startTime}
+          endTime={new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+          onAccept={handleComplete}
+        />
+      )}
 
       {/* Actions */}
-      <div className="mt-8 flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={() => currentMoment > 0 ? setCurrentMoment(currentMoment - 1) : navigate('/dashboard')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {currentMoment > 0 ? 'Anterior' : 'Volver'}
-        </Button>
+      {currentMoment < 3 && (
+        <div className="mt-8 flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => currentMoment > 0 ? setCurrentMoment(currentMoment - 1) : navigate('/dashboard')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {currentMoment > 0 ? 'Anterior' : 'Volver'}
+          </Button>
 
-        <div className="text-sm text-muted-foreground">
-          {currentItems.filter((i) => i.confirmed).length}/{currentItems.length} confirmados
+          <Button onClick={handleNext} className="gap-2" disabled={!canAdvance()}>
+            Siguiente Momento
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-
-        <Button
-          onClick={handleNext}
-          className="gap-2"
-          disabled={!allConfirmed}
-        >
-          {currentMoment < 2 ? 'Siguiente Momento' : 'Completar Cirugía'}
-          {currentMoment < 2 ? <ArrowRight className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-        </Button>
-      </div>
+      )}
     </Layout>
   );
 }

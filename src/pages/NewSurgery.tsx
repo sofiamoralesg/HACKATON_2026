@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SearchableSelect from '@/components/SearchableSelect';
+import { surgeonsList, anesthesiologistsList } from '@/lib/mockData';
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 
@@ -16,6 +18,10 @@ export default function NewSurgery() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.surgeon || !form.anesthesiologist) {
+      toast.error('Selecciona un cirujano y un anestesiólogo');
+      return;
+    }
     toast.success('Cirugía programada exitosamente');
     navigate('/dashboard');
   };
@@ -64,11 +70,25 @@ export default function NewSurgery() {
             </div>
             <div>
               <Label>Cirujano</Label>
-              <Input className="mt-1.5" placeholder="Nombre del cirujano" value={form.surgeon} onChange={(e) => setForm({ ...form, surgeon: e.target.value })} required />
+              <div className="mt-1.5">
+                <SearchableSelect
+                  options={surgeonsList}
+                  value={form.surgeon}
+                  onChange={(v) => setForm({ ...form, surgeon: v })}
+                  placeholder="Buscar cirujano..."
+                />
+              </div>
             </div>
             <div>
               <Label>Anestesiólogo</Label>
-              <Input className="mt-1.5" placeholder="Nombre" value={form.anesthesiologist} onChange={(e) => setForm({ ...form, anesthesiologist: e.target.value })} required />
+              <div className="mt-1.5">
+                <SearchableSelect
+                  options={anesthesiologistsList}
+                  value={form.anesthesiologist}
+                  onChange={(v) => setForm({ ...form, anesthesiologist: v })}
+                  placeholder="Buscar anestesiólogo..."
+                />
+              </div>
             </div>
             <div>
               <Label>Encargado del Checklist</Label>

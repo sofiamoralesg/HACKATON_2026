@@ -1,24 +1,25 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { User, UserRole } from './mockData';
+import { User, UserRole, mockUsers } from './mockData';
 
 interface AuthContextType {
   user: User | null;
-  login: (role: UserRole) => void;
+  login: (email: string, password: string, role: UserRole) => { success: boolean; error?: string };
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const mockUsers: Record<UserRole, User> = {
-  coordinador: { id: '1', name: 'Dr. Alejandro Vega', role: 'coordinador', email: 'coordinador@safeop.com' },
-  encargado: { id: '2', name: 'Enf. Laura Torres', role: 'encargado', email: 'encargado@safeop.com' },
-  consulta: { id: '3', name: 'Dr. Carlos Mendoza', role: 'consulta', email: 'consulta@safeop.com' },
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (role: UserRole) => setUser(mockUsers[role]);
+  const login = (email: string, password: string, role: UserRole): { success: boolean; error?: string } => {
+    const found = mockUsers.find((u) => u.email === email && u.password === password);
+    if (!found) return { success: false, error: 'Correo o contraseña incorrectos.' };
+    if (found.role !== role) return { success: false, error: 'El rol seleccionado no corresponde a este usuario.' };
+    setUser(found);
+    return { success: true };
+  };
+
   const logout = () => setUser(null);
 
   return (
