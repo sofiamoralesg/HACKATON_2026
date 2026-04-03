@@ -138,6 +138,7 @@ export type Database = {
           id: string
           name: string
           nit: string
+          num_operating_rooms: number
         }
         Insert: {
           address: string
@@ -145,6 +146,7 @@ export type Database = {
           id?: string
           name: string
           nit: string
+          num_operating_rooms?: number
         }
         Update: {
           address?: string
@@ -152,6 +154,7 @@ export type Database = {
           id?: string
           name?: string
           nit?: string
+          num_operating_rooms?: number
         }
         Relationships: []
       }
