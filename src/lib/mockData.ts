@@ -88,4 +88,3 @@ export const signOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' |
   { id: 'so4', text: '¿Hay problemas que resolver relacionados con el instrumental y los equipos?', blockOnNo: true },
 ];
 
-];
