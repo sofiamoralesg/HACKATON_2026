@@ -131,6 +131,7 @@ export default function AdminUsers() {
         name: editForm.name,
         role: editForm.role,
         specialty: editForm.role === 'consulta' ? editForm.specialty : undefined,
+        clinicId: editForm.clinicId || undefined,
       }),
     });
     const result = await res.json();
