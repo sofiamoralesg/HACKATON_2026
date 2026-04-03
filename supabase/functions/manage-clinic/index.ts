@@ -51,13 +51,13 @@ Deno.serve(async (req) => {
     const action = url.searchParams.get("action"); // create, update, delete
 
     if (action === "create") {
-      const { name, nit, address } = await req.json();
+      const { name, nit, address, num_operating_rooms } = await req.json();
       if (!name || !nit || !address) {
         return new Response(JSON.stringify({ error: "Todos los campos son requeridos" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { data, error } = await adminClient.from("clinics").insert({ name, nit, address }).select().single();
+      const { data, error } = await adminClient.from("clinics").insert({ name, nit, address, num_operating_rooms: num_operating_rooms || 4 }).select().single();
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
