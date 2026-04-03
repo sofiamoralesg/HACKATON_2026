@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/lib/authContext';
+import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,18 +14,37 @@ import { ArrowLeft, Save } from 'lucide-react';
 
 export default function NewSurgery() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     patient: '', procedure: '', room: '', date: '', time: '', surgeon: '', anesthesiologist: '', checklistOwner: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.surgeon || !form.anesthesiologist) {
       toast.error('Selecciona un cirujano y un anestesiólogo');
       return;
     }
-    toast.success('Cirugía programada exitosamente');
-    navigate('/dashboard');
+    setSubmitting(true);
+    const { error } = await supabase.from('surgeries').insert({
+      patient: form.patient,
+      procedure_name: form.procedure,
+      room: form.room,
+      date: form.date,
+      time: form.time,
+      surgeon: form.surgeon,
+      anesthesiologist: form.anesthesiologist,
+      checklist_owner: form.checklistOwner,
+      created_by: user?.id,
+    });
+    if (error) {
+      toast.error('Error al programar la cirugía: ' + error.message);
+    } else {
+      toast.success('Cirugía programada exitosamente');
+      navigate('/dashboard');
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -71,23 +92,13 @@ export default function NewSurgery() {
             <div>
               <Label>Cirujano</Label>
               <div className="mt-1.5">
-                <SearchableSelect
-                  options={surgeonsList}
-                  value={form.surgeon}
-                  onChange={(v) => setForm({ ...form, surgeon: v })}
-                  placeholder="Buscar cirujano..."
-                />
+                <SearchableSelect options={surgeonsList} value={form.surgeon} onChange={(v) => setForm({ ...form, surgeon: v })} placeholder="Buscar cirujano..." />
               </div>
             </div>
             <div>
               <Label>Anestesiólogo</Label>
               <div className="mt-1.5">
-                <SearchableSelect
-                  options={anesthesiologistsList}
-                  value={form.anesthesiologist}
-                  onChange={(v) => setForm({ ...form, anesthesiologist: v })}
-                  placeholder="Buscar anestesiólogo..."
-                />
+                <SearchableSelect options={anesthesiologistsList} value={form.anesthesiologist} onChange={(v) => setForm({ ...form, anesthesiologist: v })} placeholder="Buscar anestesiólogo..." />
               </div>
             </div>
             <div>
@@ -98,7 +109,7 @@ export default function NewSurgery() {
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>Cancelar</Button>
-            <Button type="submit" className="gap-2"><Save className="h-4 w-4" /> Programar Cirugía</Button>
+            <Button type="submit" className="gap-2" disabled={submitting}><Save className="h-4 w-4" /> Programar Cirugía</Button>
           </div>
         </form>
       </div>

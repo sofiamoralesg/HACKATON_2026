@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, LogOut, LayoutDashboard, ClipboardCheck, History, Plus } from 'lucide-react';
+import { Shield, LogOut, LayoutDashboard, History, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -9,8 +9,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -45,15 +45,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
+                <button key={item.path} onClick={() => navigate(item.path)} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
                   <Icon className="h-4 w-4" />
                   {item.label}
                 </button>
