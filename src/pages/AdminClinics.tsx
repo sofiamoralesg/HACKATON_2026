@@ -19,9 +19,9 @@ export default function AdminClinics() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', nit: '', address: '' });
+  const [form, setForm] = useState({ name: '', nit: '', address: '', num_operating_rooms: '4' });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', nit: '', address: '' });
+  const [editForm, setEditForm] = useState({ name: '', nit: '', address: '', num_operating_rooms: '4' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
