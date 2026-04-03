@@ -158,10 +158,11 @@ export default function AdminClinics() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_auto_1fr_auto_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
             <span>Nombre</span>
             <span>NIT</span>
             <span>Dirección</span>
+            <span>Quirófanos</span>
             <span>Fecha</span>
             <span>Acciones</span>
           </div>
