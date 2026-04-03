@@ -81,13 +81,19 @@ export default function Checklist() {
   }
 
   const allSignInAnswered = signInAnswers.every((q) => q.answer !== null);
+  const signInFollowUpsOk = signInAnswers.every((q) => {
+    if (q.followUpText && q.answer === 'si') {
+      return q.followUpAnswer === 'si';
+    }
+    return true;
+  });
   const allTimeOutAnswered = timeOutAnswers.every((q) => q.answer !== null);
   const usedInstruments = instruments.filter((i) => i.initialCount > 0);
   const allSignOutAnswered = signOutAnswers.every((q) => q.answer !== null);
   const instrumentsMatch = finalInstruments.length > 0 && finalInstruments.every((i) => i.finalCount === i.initialCount);
 
   const canAdvance = () => {
-    if (currentMoment === 0) return allSignInAnswered;
+    if (currentMoment === 0) return allSignInAnswered && signInFollowUpsOk;
     if (currentMoment === 1) return allTimeOutAnswered && usedInstruments.length > 0;
     if (currentMoment === 2) return allSignOutAnswered && instrumentsMatch;
     return true;
@@ -95,7 +101,13 @@ export default function Checklist() {
 
   const handleAnswer = (list: ChecklistQuestion[], setList: React.Dispatch<React.SetStateAction<ChecklistQuestion[]>>, questionId: string, answer: 'si' | 'no') => {
     setList(list.map((q) =>
-      q.id === questionId ? { ...q, answer, answeredBy: user?.name, answeredAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) } : q
+      q.id === questionId ? { ...q, answer, followUpAnswer: answer === 'no' ? null : q.followUpAnswer, answeredBy: user?.name, answeredAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) } : q
+    ));
+  };
+
+  const handleFollowUpAnswer = (list: ChecklistQuestion[], setList: React.Dispatch<React.SetStateAction<ChecklistQuestion[]>>, questionId: string, answer: 'si' | 'no') => {
+    setList(list.map((q) =>
+      q.id === questionId ? { ...q, followUpAnswer: answer } : q
     ));
   };
 
