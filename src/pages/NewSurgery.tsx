@@ -93,7 +93,7 @@ export default function NewSurgery() {
             </div>
             <div>
               <Label>Identificación del Paciente</Label>
-              <Input className="mt-1.5" placeholder="Cédula o ID" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} />
+              <Input className="mt-1.5" placeholder="Cédula o ID" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })} required />
             </div>
             <div className="sm:col-span-2">
               <Label>Procedimiento</Label>
