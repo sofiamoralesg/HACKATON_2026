@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify the caller is authenticated and is a coordinador
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
@@ -24,7 +23,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller with anon client
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     const { data: { user: caller }, error: authError } = await anonClient.auth.getUser(
       authHeader.replace("Bearer ", "")
@@ -36,8 +34,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check caller is coordinador
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get caller profile (role + clinic + super admin status)
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("clinic_id, is_super_admin")
+      .eq("id", caller.id)
+      .single();
+
     const { data: roleRow } = await adminClient
       .from("user_roles")
       .select("role")
@@ -51,7 +56,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, role, specialty } = await req.json();
+    const { email, password, name, role, specialty, clinicId } = await req.json();
 
     if (!email || !password || !name || !role) {
       return new Response(JSON.stringify({ error: "Faltan campos requeridos" }), {
@@ -67,6 +72,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Only super admin can create supervisors
+    if (role === "supervisor" && !callerProfile?.is_super_admin) {
+      return new Response(JSON.stringify({ error: "Solo el super administrador puede crear supervisores" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Determine clinic_id for the new user
+    let assignedClinicId: string | null = null;
+    if (callerProfile?.is_super_admin) {
+      // Super admin must specify clinic for supervisors
+      if (role === "supervisor" && !clinicId) {
+        return new Response(JSON.stringify({ error: "Debe asignar una clínica al supervisor" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      assignedClinicId = clinicId || callerProfile.clinic_id;
+    } else {
+      // Regular supervisor assigns their own clinic
+      assignedClinicId = callerProfile?.clinic_id || null;
+    }
+
     if (role === "consulta" && !specialty) {
       return new Response(JSON.stringify({ error: "La especialidad es requerida para usuarios de consulta" }), {
         status: 400,
@@ -74,7 +103,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create user with admin API
+    // Create user
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -102,9 +131,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update specialty if consulta
-    if (role === "consulta" && specialty) {
-      await adminClient.from("profiles").update({ specialty }).eq("id", newUser.user.id);
+    // Update profile with clinic_id and specialty
+    const profileUpdate: Record<string, unknown> = {};
+    if (assignedClinicId) profileUpdate.clinic_id = assignedClinicId;
+    if (role === "consulta" && specialty) profileUpdate.specialty = specialty;
+
+    if (Object.keys(profileUpdate).length > 0) {
+      await adminClient.from("profiles").update(profileUpdate).eq("id", newUser.user.id);
     }
 
     return new Response(
