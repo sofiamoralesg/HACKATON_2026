@@ -51,7 +51,7 @@ export default function AdminClinics() {
     const result = await res.json();
     if (result.success) {
       toast.success(`Clínica "${form.name}" creada`);
-      setForm({ name: '', nit: '', address: '' });
+      setForm({ name: '', nit: '', address: '', num_operating_rooms: '4' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['clinics'] });
     } else {
