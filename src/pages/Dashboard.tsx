@@ -111,7 +111,7 @@ export default function Dashboard() {
                   </div>
 
                   <div className="flex gap-2">
-                    {isConsulta && (
+                    {(isConsulta || isCoordinator) && (
                       <Button variant="outline" onClick={() => navigate(`/cirugia/${surgery.id}`)} className="gap-2">
                         <Eye className="h-4 w-4" /> Ver Detalle
                       </Button>

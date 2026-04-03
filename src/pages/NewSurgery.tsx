@@ -127,7 +127,9 @@ export default function NewSurgery() {
             </div>
             <div>
               <Label>Encargado del Checklist</Label>
-              <Input className="mt-1.5" placeholder="Nombre" value={form.checklistOwner} onChange={(e) => setForm({ ...form, checklistOwner: e.target.value })} required />
+              <div className="mt-1.5">
+                <SearchableSelect options={encargadosList} value={form.checklistOwner} onChange={(v) => setForm({ ...form, checklistOwner: v })} placeholder="Buscar encargado..." />
+              </div>
             </div>
           </div>
 
