@@ -1,18 +1,23 @@
 import Layout from '@/components/Layout';
+import { useAuth } from '@/lib/authContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function History() {
+  const { user } = useAuth();
+
   const { data: surgeries = [], isLoading } = useQuery({
-    queryKey: ['surgeries-history'],
+    queryKey: ['surgeries-history', user?.clinicId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('surgeries')
         .select('*')
         .order('date', { ascending: false })
         .order('time', { ascending: true });
+      if (user?.clinicId) query = query.eq('clinic_id', user.clinicId);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
