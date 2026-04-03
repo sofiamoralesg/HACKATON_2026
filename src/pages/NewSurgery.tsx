@@ -43,6 +43,16 @@ export default function NewSurgery() {
       return profiles || [];
     },
   });
+  const { data: clinicData } = useQuery({
+    queryKey: ['clinic-rooms', user?.clinicId],
+    queryFn: async () => {
+      if (!user?.clinicId) return null;
+      const { data } = await supabase.from('clinics').select('num_operating_rooms').eq('id', user.clinicId).single();
+      return data;
+    },
+    enabled: !!user?.clinicId,
+  });
+  const clinicRooms = (clinicData as any)?.num_operating_rooms || 4;
 
   const surgeonsList = consultaUsers.filter(u => u.specialty === 'cirujano').map(u => u.name);
   const anesthesiologistsList = consultaUsers.filter(u => u.specialty === 'anestesiologo').map(u => u.name);
@@ -109,7 +119,7 @@ export default function NewSurgery() {
               <Select onValueChange={(v) => setForm({ ...form, room: v })}>
                 <SelectTrigger className="mt-1.5"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
-                  {['Quirófano 1', 'Quirófano 2', 'Quirófano 3', 'Quirófano 4'].map((r) => (
+                  {Array.from({ length: clinicRooms }, (_, i) => `Quirófano ${i + 1}`).map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
                 </SelectContent>

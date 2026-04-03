@@ -19,9 +19,9 @@ export default function AdminClinics() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', nit: '', address: '' });
+  const [form, setForm] = useState({ name: '', nit: '', address: '', num_operating_rooms: '4' });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', nit: '', address: '' });
+  const [editForm, setEditForm] = useState({ name: '', nit: '', address: '', num_operating_rooms: '4' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -46,12 +46,12 @@ export default function AdminClinics() {
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-clinic?action=create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, num_operating_rooms: parseInt(form.num_operating_rooms) || 4 }),
     });
     const result = await res.json();
     if (result.success) {
       toast.success(`Clínica "${form.name}" creada`);
-      setForm({ name: '', nit: '', address: '' });
+      setForm({ name: '', nit: '', address: '', num_operating_rooms: '4' });
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['clinics'] });
     } else {
@@ -62,7 +62,7 @@ export default function AdminClinics() {
 
   const startEdit = (c: typeof clinics[0]) => {
     setEditingId(c.id);
-    setEditForm({ name: c.name, nit: c.nit, address: c.address });
+    setEditForm({ name: c.name, nit: c.nit, address: c.address, num_operating_rooms: String((c as any).num_operating_rooms || 4) });
   };
 
   const handleUpdate = async () => {
@@ -72,7 +72,7 @@ export default function AdminClinics() {
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-clinic?action=update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ clinicId: editingId, ...editForm }),
+      body: JSON.stringify({ clinicId: editingId, ...editForm, num_operating_rooms: parseInt(editForm.num_operating_rooms) || 4 }),
     });
     const result = await res.json();
     if (result.success) {
@@ -137,6 +137,10 @@ export default function AdminClinics() {
               <Label>Dirección</Label>
               <Input placeholder="Calle 100 #15-20" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} required />
             </div>
+            <div className="space-y-1.5">
+              <Label>Número de Quirófanos</Label>
+              <Input type="number" min="1" max="50" placeholder="4" value={form.num_operating_rooms} onChange={e => setForm({ ...form, num_operating_rooms: e.target.value })} required />
+            </div>
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
               <Button type="submit" disabled={submitting} className="gap-2">
@@ -154,10 +158,11 @@ export default function AdminClinics() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_auto_1fr_auto_auto_auto] gap-4 border-b bg-muted/50 px-5 py-3 text-xs font-medium text-muted-foreground">
             <span>Nombre</span>
             <span>NIT</span>
             <span>Dirección</span>
+            <span>Quirófanos</span>
             <span>Fecha</span>
             <span>Acciones</span>
           </div>
@@ -176,11 +181,15 @@ export default function AdminClinics() {
                       <Label className="text-xs">NIT</Label>
                       <Input className="mt-1" value={editForm.nit} onChange={e => setEditForm({ ...editForm, nit: e.target.value })} />
                     </div>
-                    <div>
+                     <div>
                       <Label className="text-xs">Dirección</Label>
                       <Input className="mt-1" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} />
                     </div>
-                  </div>
+                     <div>
+                      <Label className="text-xs">Quirófanos</Label>
+                      <Input className="mt-1" type="number" min="1" max="50" value={editForm.num_operating_rooms} onChange={e => setEditForm({ ...editForm, num_operating_rooms: e.target.value })} />
+                    </div>
+                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleUpdate} disabled={savingEdit} className="gap-1.5">
                       {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Guardar
@@ -191,7 +200,7 @@ export default function AdminClinics() {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-4 px-5 py-4">
+                <div className="grid grid-cols-[1fr_auto_1fr_auto_auto_auto] items-center gap-4 px-5 py-4">
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                       <Building2 className="h-4 w-4 text-primary" />
@@ -200,6 +209,7 @@ export default function AdminClinics() {
                   </div>
                   <span className="text-sm text-muted-foreground">{c.nit}</span>
                   <span className="text-sm text-muted-foreground">{c.address}</span>
+                  <span className="text-sm text-muted-foreground text-center">{(c as any).num_operating_rooms || 4}</span>
                   <span className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString('es-ES')}</span>
                   <div className="flex gap-1.5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(c)}>
