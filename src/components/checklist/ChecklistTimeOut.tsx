@@ -20,6 +20,10 @@ export default function ChecklistTimeOut({ questions, onAnswer, instruments, onU
     onUpdateInstruments(instruments.map((i) => i.id === id ? { ...i, initialCount: Math.max(0, count) } : i));
   };
 
+  const removeInstrument = (id: string) => {
+    onUpdateInstruments(instruments.filter((i) => i.id !== id));
+  };
+
   const addInstrument = () => {
     if (!newInstrument.trim()) return;
     const inst: InstrumentCount = {
