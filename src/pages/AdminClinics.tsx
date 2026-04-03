@@ -46,7 +46,7 @@ export default function AdminClinics() {
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-clinic?action=create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, num_operating_rooms: parseInt(form.num_operating_rooms) || 4 }),
     });
     const result = await res.json();
     if (result.success) {
