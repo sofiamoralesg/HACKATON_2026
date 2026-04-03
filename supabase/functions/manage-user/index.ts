@@ -64,17 +64,17 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Delete from auth (cascades to profiles and user_roles via FK)
+      // Delete dependent rows FIRST to avoid FK constraint errors
+      await adminClient.from("user_roles").delete().eq("user_id", userId);
+      await adminClient.from("profiles").delete().eq("id", userId);
+
+      // Now delete from auth
       const { error: delError } = await adminClient.auth.admin.deleteUser(userId);
       if (delError) {
         return new Response(JSON.stringify({ error: delError.message }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      // Also clean up profile and roles manually in case no FK cascade
-      await adminClient.from("user_roles").delete().eq("user_id", userId);
-      await adminClient.from("profiles").delete().eq("id", userId);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
