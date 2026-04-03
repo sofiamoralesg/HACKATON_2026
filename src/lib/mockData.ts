@@ -41,29 +41,41 @@ export const anesthesiologistsList = [
 
 // Common surgical instruments
 export const commonInstruments = [
-  'Bisturí',
-  'Pinza Kelly',
+  'Mango de bisturí #3',
+  'Mango de bisturí #4',
+  'Hojas de bisturí',
+  'Tijera Mayo recta',
+  'Tijera Mayo curva',
+  'Tijera Metzenbaum',
+  'Pinza Kelly recta',
+  'Pinza Kelly curva',
   'Pinza Kocher',
   'Pinza Allis',
-  'Tijera Mayo',
-  'Tijera Metzenbaum',
+  'Pinza Babcock',
+  'Pinza de disección sin dientes',
+  'Pinza de disección con dientes',
+  'Pinza de campo (Backhaus)',
+  'Pinza de anillo recta',
+  'Pinza de anillo curva',
+  'Pinza Mixter',
   'Porta agujas',
   'Separador Farabeuf',
   'Separador Richardson',
-  'Pinza de campo (Backhaus)',
+  'Separador Diver',
+  'Pinza Erina',
+  'Cánula de aspiración (Yankauer)',
   'Gasas',
   'Compresas',
   'Agujas de sutura',
   'Clamp vascular',
   'Electrobisturí (punta)',
-  'Cánula de aspiración (Yankauer)',
 ];
 
 // WHO Surgical Safety Checklist — Sign In (Before anesthesia induction)
 export const signInQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
   { id: 'si1', text: '¿Ha confirmado el paciente su identidad, el sitio quirúrgico, el procedimiento y su consentimiento?', blockOnNo: true },
   { id: 'si2', text: '¿Se ha marcado el sitio quirúrgico? (Sí / No procede)', blockOnNo: true },
-  { id: 'si3', text: '¿Se ha completado la comprobación de los aparatos de anestesia y la medicación anestésica?' },
+  { id: 'si3', text: '¿Se ha completado la comprobación de los aparatos de anestesia y la medicación anestésica?', blockOnNo: true },
   { id: 'si4', text: '¿Se ha colocado el pulsioxímetro al paciente y funciona?', blockOnNo: true },
   { id: 'si5', text: '¿Tiene el paciente alergias conocidas?', followUpText: '¿Son conocidas y tenidas en cuenta?' },
   { id: 'si6', text: '¿Tiene el paciente vía aérea difícil / riesgo de aspiración?', followUpText: '¿Hay materiales, equipos y ayuda disponible?' },
@@ -83,8 +95,8 @@ export const timeOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' |
 
 // WHO Surgical Safety Checklist — Sign Out (Before patient leaves OR)
 export const signOutQuestions: Omit<ChecklistQuestion, 'answer' | 'answeredBy' | 'answeredAt'>[] = [
-  { id: 'so2', text: 'El enfermero confirma verbalmente: el recuento de instrumentos, gasas y agujas', blockOnNo: true },
-  { id: 'so3', text: 'El enfermero confirma verbalmente: el etiquetado de las muestras (lectura de la etiqueta en voz alta, incluido el nombre del paciente)', blockOnNo: true },
+  { id: 'so2', text: 'Se confirma verbalmente: el recuento de instrumentos, gasas y agujas', blockOnNo: true },
+  { id: 'so3', text: 'Se confirma verbalmente: el etiquetado de las muestras (lectura de la etiqueta en voz alta, incluido el nombre del paciente)', blockOnNo: true },
   { id: 'so4', text: '¿Hay problemas que resolver relacionados con el instrumental y los equipos?', blockOnNo: true },
 ];
 
