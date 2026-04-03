@@ -4,7 +4,7 @@ import QuestionCard from './QuestionCard';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Wrench } from 'lucide-react';
+import { Plus, Wrench, Trash2 } from 'lucide-react';
 
 interface Props {
   questions: ChecklistQuestion[];
@@ -18,6 +18,10 @@ export default function ChecklistTimeOut({ questions, onAnswer, instruments, onU
 
   const updateCount = (id: string, count: number) => {
     onUpdateInstruments(instruments.map((i) => i.id === id ? { ...i, initialCount: Math.max(0, count) } : i));
+  };
+
+  const removeInstrument = (id: string) => {
+    onUpdateInstruments(instruments.filter((i) => i.id !== id));
   };
 
   const addInstrument = () => {
@@ -61,6 +65,9 @@ export default function ChecklistTimeOut({ questions, onAnswer, instruments, onU
                 onChange={(e) => updateCount(inst.id, parseInt(e.target.value) || 0)}
                 className="w-20 text-center"
               />
+              <Button type="button" variant="ghost" size="icon" onClick={() => removeInstrument(inst.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>
