@@ -16,8 +16,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  const ctx = useAuth();
+  if (!ctx.user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
