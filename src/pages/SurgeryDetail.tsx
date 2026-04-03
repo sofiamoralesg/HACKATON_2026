@@ -37,7 +37,7 @@ export default function SurgeryDetail() {
   });
 
   const [editForm, setEditForm] = useState({
-    patient: '', procedure_name: '', room: '', date: '', time: '',
+    patient: '', patient_id: '', procedure_name: '', room: '', date: '', time: '',
     surgeon: '', anesthesiologist: '', checklist_owner: '',
   });
 
