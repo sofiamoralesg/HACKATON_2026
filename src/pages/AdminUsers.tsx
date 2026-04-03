@@ -77,7 +77,7 @@ export default function AdminUsers() {
     e.preventDefault();
     if (!form.role) { toast.error('Selecciona un rol'); return; }
     if (form.role === 'consulta' && !form.specialty) { toast.error('Selecciona una especialidad'); return; }
-    if (user?.isSuperAdmin && form.role === 'supervisor' && !form.clinicId) { toast.error('Selecciona una clínica para el supervisor'); return; }
+    if (user?.isSuperAdmin && !form.clinicId) { toast.error('Selecciona una clínica'); return; }
     setSubmitting(true);
 
     const token = await getToken();
