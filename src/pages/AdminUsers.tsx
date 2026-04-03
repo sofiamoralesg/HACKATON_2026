@@ -60,7 +60,7 @@ export default function AdminUsers() {
 
       let result = profiles.map((p) => {
         const roleRow = roles.find((r) => r.user_id === p.id);
-        return { ...p, role: roleRow?.role || 'sin rol', clinicName: p.clinic_id ? clinicMap.get(p.clinic_id) || '' : '' };
+        return { ...p, role: roleRow?.role || 'sin rol', clinicName: p.clinic_id ? clinicMap.get(p.clinic_id) || '' : '', is_super_admin: (p as any).is_super_admin || false };
       });
 
       // If not super admin, only show users from same clinic
