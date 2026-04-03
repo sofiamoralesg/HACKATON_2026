@@ -72,7 +72,7 @@ export default function AdminClinics() {
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-clinic?action=update`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ clinicId: editingId, ...editForm }),
+      body: JSON.stringify({ clinicId: editingId, ...editForm, num_operating_rooms: parseInt(editForm.num_operating_rooms) || 4 }),
     });
     const result = await res.json();
     if (result.success) {
