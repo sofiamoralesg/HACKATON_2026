@@ -17,7 +17,7 @@ export default function NewSurgery() {
   const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    patient: '', procedure: '', room: '', date: '', time: '', surgeon: '', anesthesiologist: '', checklistOwner: '',
+    patient: '', patientId: '', procedure: '', room: '', date: '', time: '', surgeon: '', anesthesiologist: '', checklistOwner: '',
   });
 
   const { data: consultaUsers = [] } = useQuery({
