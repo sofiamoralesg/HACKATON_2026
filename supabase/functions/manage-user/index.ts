@@ -64,11 +64,42 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Delete dependent rows FIRST to avoid FK constraint errors
-      await adminClient.from("user_roles").delete().eq("user_id", userId);
-      await adminClient.from("profiles").delete().eq("id", userId);
+      const { error: surgeriesError } = await adminClient
+        .from("surgeries")
+        .update({ created_by: null })
+        .eq("created_by", userId);
 
-      // Now delete from auth
+      if (surgeriesError) {
+        return new Response(JSON.stringify({ error: "Error limpiando cirugías del usuario: " + surgeriesError.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: phasesError } = await adminClient
+        .from("checklist_phases")
+        .update({ completed_by: null })
+        .eq("completed_by", userId);
+
+      if (phasesError) {
+        return new Response(JSON.stringify({ error: "Error limpiando fases del checklist: " + phasesError.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: rolesError } = await adminClient.from("user_roles").delete().eq("user_id", userId);
+      if (rolesError) {
+        return new Response(JSON.stringify({ error: "Error borrando roles del usuario: " + rolesError.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: profileError } = await adminClient.from("profiles").delete().eq("id", userId);
+      if (profileError) {
+        return new Response(JSON.stringify({ error: "Error borrando perfil del usuario: " + profileError.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const { error: delError } = await adminClient.auth.admin.deleteUser(userId);
       if (delError) {
         return new Response(JSON.stringify({ error: delError.message }), {
