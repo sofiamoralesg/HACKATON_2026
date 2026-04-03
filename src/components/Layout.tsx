@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, LogOut, LayoutDashboard, History, Plus } from 'lucide-react';
+import { Shield, LogOut, LayoutDashboard, History, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -19,6 +19,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Nueva Cirugía', path: '/nueva-cirugia', icon: Plus },
         { label: 'Historial', path: '/historial', icon: History },
+        { label: 'Usuarios', path: '/admin/usuarios', icon: Users },
       ]
     : user?.role === 'encargado'
     ? [
