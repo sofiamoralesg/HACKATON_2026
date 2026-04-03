@@ -22,6 +22,7 @@ export default function QuestionCard({ question, onAnswer, onFollowUpAnswer, ind
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.04 }}
       className={`rounded-xl border bg-card p-4 transition-all ${
+        blockingNo ? 'border-destructive/40 bg-destructive/5' :
         followUpBlocked ? 'border-destructive/40 bg-destructive/5' :
         question.answer === 'si' ? 'border-success/30' : question.answer === 'no' ? 'border-warning/30' : ''
       }`}
