@@ -6,11 +6,12 @@ import { User } from 'lucide-react';
 interface Props {
   questions: ChecklistQuestion[];
   onAnswer: (questionId: string, answer: 'si' | 'no') => void;
+  onFollowUpAnswer?: (questionId: string, answer: 'si' | 'no') => void;
   patientName?: string;
   patientId?: string;
 }
 
-export default function ChecklistSignIn({ questions, onAnswer, patientName, patientId }: Props) {
+export default function ChecklistSignIn({ questions, onAnswer, onFollowUpAnswer, patientName, patientId }: Props) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
       {(patientName || patientId) && (
@@ -24,7 +25,7 @@ export default function ChecklistSignIn({ questions, onAnswer, patientName, pati
         </div>
       )}
       {questions.map((q, i) => (
-        <QuestionCard key={q.id} question={q} onAnswer={onAnswer} index={i} />
+        <QuestionCard key={q.id} question={q} onAnswer={onAnswer} onFollowUpAnswer={onFollowUpAnswer} index={i} />
       ))}
     </motion.div>
   );
