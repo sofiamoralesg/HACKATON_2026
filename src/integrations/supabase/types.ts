@@ -199,6 +199,7 @@ export type Database = {
           date: string
           id: string
           patient: string
+          patient_id: string | null
           procedure_name: string
           room: string
           status: Database["public"]["Enums"]["surgery_status"]
@@ -214,6 +215,7 @@ export type Database = {
           date: string
           id?: string
           patient: string
+          patient_id?: string | null
           procedure_name: string
           room: string
           status?: Database["public"]["Enums"]["surgery_status"]
@@ -229,6 +231,7 @@ export type Database = {
           date?: string
           id?: string
           patient?: string
+          patient_id?: string | null
           procedure_name?: string
           room?: string
           status?: Database["public"]["Enums"]["surgery_status"]
