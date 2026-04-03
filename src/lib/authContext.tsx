@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupaUser } from '@supabase/supabase-js';
 
@@ -22,26 +22,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-async function loadAppUser(supaUser: SupaUser): Promise<AppUser | null> {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, email')
-    .eq('id', supaUser.id)
-    .single();
+async function loadAppUser(userId: string): Promise<AppUser | null> {
+  const [profileRes, roleRes] = await Promise.all([
+    supabase.from('profiles').select('name, email').eq('id', userId).single(),
+    supabase.from('user_roles').select('role').eq('user_id', userId).single(),
+  ]);
 
-  const { data: roleRow } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', supaUser.id)
-    .single();
-
-  if (!profile || !roleRow) return null;
+  if (profileRes.error || roleRes.error || !profileRes.data || !roleRes.data) {
+    console.error('loadAppUser failed:', { profileErr: profileRes.error, roleErr: roleRes.error });
+    return null;
+  }
 
   return {
-    id: supaUser.id,
-    name: profile.name,
-    email: profile.email,
-    role: roleRow.role as UserRole,
+    id: userId,
+    name: profileRes.data.name,
+    email: profileRes.data.email,
+    role: roleRes.data.role as UserRole,
   };
 }
 
@@ -50,48 +46,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const appUser = await loadAppUser(session.user);
-        setUser(appUser);
-      } else {
+    let mounted = true;
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_OUT') {
         setUser(null);
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const appUser = await loadAppUser(session.user);
-        setUser(appUser);
+        setTimeout(async () => {
+          if (!mounted) return;
+          const appUser = await loadAppUser(session.user.id);
+          if (mounted && appUser) {
+            setUser(appUser);
+          }
+          if (mounted) setLoading(false);
+        }, 0);
+      } else if (event !== 'INITIAL_SESSION') {
+        setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        const appUser = await loadAppUser(session.user.id);
+        if (mounted) {
+          setUser(appUser);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (email: string, password: string, role: UserRole) => {
+  const login = async (email: string, password: string, role: UserRole): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { success: false, error: 'Correo o contraseña incorrectos.' };
 
-    const { data: roleRow } = await supabase
+    // Verify role
+    const { data: roleRow, error: roleErr } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', data.user.id)
       .single();
 
-    if (!roleRow || roleRow.role !== role) {
+    if (roleErr || !roleRow || roleRow.role !== role) {
       await supabase.auth.signOut();
       return { success: false, error: 'El rol seleccionado no corresponde a este usuario.' };
     }
 
-    const appUser = await loadAppUser(data.user);
-    setUser(appUser);
-    return { success: true };
+    // Directly set user without waiting for onAuthStateChange
+    const appUser = await loadAppUser(data.user.id);
+    if (appUser) {
+      setUser(appUser);
+      return { success: true };
+    }
+    return { success: false, error: 'Error al cargar perfil de usuario.' };
   };
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+  const signUp = async (email: string, password: string, name: string, role: UserRole): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -100,16 +127,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { success: false, error: error.message };
     if (!data.user) return { success: false, error: 'No se pudo crear el usuario.' };
 
-    // Assign role
-    const { error: roleError } = await supabase.from('user_roles').insert({
-      user_id: data.user.id,
-      role,
+    // Assign role using security definer function
+    const { error: roleError } = await supabase.rpc('assign_user_role', {
+      _user_id: data.user.id,
+      _role: role,
     });
-    if (roleError) return { success: false, error: 'Error al asignar el rol.' };
+    if (roleError) return { success: false, error: 'Error al asignar el rol: ' + roleError.message };
 
-    const appUser = await loadAppUser(data.user);
-    setUser(appUser);
-    return { success: true };
+    // Directly set user
+    const appUser = await loadAppUser(data.user.id);
+    if (appUser) {
+      setUser(appUser);
+      return { success: true };
+    }
+    return { success: false, error: 'Error al cargar perfil de usuario.' };
   };
 
   const logout = async () => {
