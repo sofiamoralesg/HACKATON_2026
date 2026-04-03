@@ -45,6 +45,7 @@ export default function AdminUsers() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.role) { toast.error('Selecciona un rol'); return; }
+    if (form.role === 'consulta' && !form.specialty) { toast.error('Selecciona una especialidad'); return; }
     setSubmitting(true);
 
     const { data: sessionData } = await supabase.auth.getSession();
