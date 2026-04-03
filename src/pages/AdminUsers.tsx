@@ -54,9 +54,13 @@ export default function AdminUsers() {
       const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
       if (rErr) throw rErr;
 
+      // Load clinics for name mapping
+      const { data: allClinics } = await supabase.from('clinics').select('id, name');
+      const clinicMap = new Map((allClinics || []).map(c => [c.id, c.name]));
+
       let result = profiles.map((p) => {
         const roleRow = roles.find((r) => r.user_id === p.id);
-        return { ...p, role: roleRow?.role || 'sin rol' };
+        return { ...p, role: roleRow?.role || 'sin rol', clinicName: p.clinic_id ? clinicMap.get(p.clinic_id) || '' : '' };
       });
 
       // If not super admin, only show users from same clinic
