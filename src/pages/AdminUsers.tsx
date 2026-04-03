@@ -31,7 +31,7 @@ export default function AdminUsers() {
   const [form, setForm] = useState({ email: '', password: '', name: '', role: '', specialty: '', clinicId: '' });
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', role: '', specialty: '' });
+  const [editForm, setEditForm] = useState({ name: '', role: '', specialty: '', clinicId: '' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
