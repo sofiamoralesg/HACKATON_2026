@@ -69,13 +69,18 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { clinicId, name, nit, address } = await req.json();
+      const { clinicId, name, nit, address, num_operating_rooms } = await req.json();
       if (!clinicId) {
         return new Response(JSON.stringify({ error: "clinicId requerido" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { error } = await adminClient.from("clinics").update({ name, nit, address }).eq("id", clinicId);
+      const updateData: Record<string, unknown> = {};
+      if (name !== undefined) updateData.name = name;
+      if (nit !== undefined) updateData.nit = nit;
+      if (address !== undefined) updateData.address = address;
+      if (num_operating_rooms !== undefined) updateData.num_operating_rooms = num_operating_rooms;
+      const { error } = await adminClient.from("clinics").update(updateData).eq("id", clinicId);
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },

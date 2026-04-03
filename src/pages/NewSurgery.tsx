@@ -109,7 +109,7 @@ export default function NewSurgery() {
               <Select onValueChange={(v) => setForm({ ...form, room: v })}>
                 <SelectTrigger className="mt-1.5"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
-                  {['Quirófano 1', 'Quirófano 2', 'Quirófano 3', 'Quirófano 4'].map((r) => (
+                  {Array.from({ length: clinicRooms }, (_, i) => `Quirófano ${i + 1}`).map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
                 </SelectContent>
