@@ -24,6 +24,14 @@ const comparison = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      const dest = user.role === 'supervisor' ? '/admin/usuarios' : '/dashboard';
+      navigate(dest, { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
