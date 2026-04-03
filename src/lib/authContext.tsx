@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupaUser } from '@supabase/supabase-js';
 
@@ -23,33 +23,49 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 async function loadAppUser(supaUser: SupaUser): Promise<AppUser | null> {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, email')
-    .eq('id', supaUser.id)
-    .single();
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, email')
+      .eq('id', supaUser.id)
+      .single();
 
-  const { data: roleRow } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', supaUser.id)
-    .single();
+    const { data: roleRow } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', supaUser.id)
+      .single();
 
-  if (!profile || !roleRow) return null;
+    if (!profile || !roleRow) return null;
 
-  return {
-    id: supaUser.id,
-    name: profile.name,
-    email: profile.email,
-    role: roleRow.role as UserRole,
-  };
+    return {
+      id: supaUser.id,
+      name: profile.name,
+      email: profile.email,
+      role: roleRow.role as UserRole,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const appUser = await loadAppUser(session.user);
+      setUser(appUser);
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
+    // Set up listener BEFORE checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const appUser = await loadAppUser(session.user);
@@ -60,21 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const appUser = await loadAppUser(session.user);
-        setUser(appUser);
-      }
-      setLoading(false);
-    });
+    // Check initial session
+    refreshUser();
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [refreshUser]);
 
   const login = async (email: string, password: string, role: UserRole) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { success: false, error: 'Correo o contraseña incorrectos.' };
 
+    // Verify role matches
     const { data: roleRow } = await supabase
       .from('user_roles')
       .select('role')
@@ -86,8 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'El rol seleccionado no corresponde a este usuario.' };
     }
 
-    const appUser = await loadAppUser(data.user);
-    setUser(appUser);
+    // Wait for onAuthStateChange to set the user — just return success
+    // The useEffect in Login.tsx will handle navigation when user state updates
     return { success: true };
   };
 
@@ -107,8 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (roleError) return { success: false, error: 'Error al asignar el rol: ' + roleError.message };
 
-    const appUser = await loadAppUser(data.user);
-    setUser(appUser);
+    // Refresh user data to pick up the new role
+    await refreshUser();
     return { success: true };
   };
 
