@@ -57,7 +57,7 @@ export default function AdminUsers() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, specialty: form.role === 'consulta' ? form.specialty : undefined }),
     });
 
     const result = await res.json();
