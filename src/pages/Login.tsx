@@ -41,15 +41,12 @@ export default function Login() {
       const result = await signUp(email, password, name, selectedRole);
       if (result.success) {
         toast.success('Cuenta creada exitosamente');
-        navigate('/dashboard');
       } else {
         setError(result.error || 'Error al crear la cuenta');
       }
     } else {
       const result = await login(email, password, selectedRole);
-      if (result.success) {
-        navigate('/dashboard');
-      } else {
+      if (!result.success) {
         setError(result.error || 'Error al iniciar sesión');
       }
     }
