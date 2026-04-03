@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!roleRow || roleRow.role !== "coordinador") {
-      return new Response(JSON.stringify({ error: "Solo los coordinadores pueden crear usuarios" }), {
+    if (!roleRow || roleRow.role !== "supervisor") {
+      return new Response(JSON.stringify({ error: "Solo los supervisores pueden crear usuarios" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
