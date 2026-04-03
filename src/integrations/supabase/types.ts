@@ -131,6 +131,30 @@ export type Database = {
           },
         ]
       }
+      clinics: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          name: string
+          nit: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          name: string
+          nit: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          name?: string
+          nit?: string
+        }
+        Relationships: []
+      }
       instruments: {
         Row: {
           created_at: string
@@ -168,27 +192,41 @@ export type Database = {
       }
       profiles: {
         Row: {
+          clinic_id: string | null
           created_at: string
           email: string
           id: string
+          is_super_admin: boolean
           name: string
           specialty: string | null
         }
         Insert: {
+          clinic_id?: string | null
           created_at?: string
           email: string
           id: string
+          is_super_admin?: boolean
           name: string
           specialty?: string | null
         }
         Update: {
+          clinic_id?: string | null
           created_at?: string
           email?: string
           id?: string
+          is_super_admin?: boolean
           name?: string
           specialty?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       surgeries: {
         Row: {
