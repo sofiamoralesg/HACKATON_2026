@@ -185,12 +185,17 @@ export default function AdminUsers() {
                 <span className="text-sm font-medium text-foreground">{u.name}</span>
               </div>
               <span className="text-sm text-muted-foreground">{u.email}</span>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                u.role === 'coordinador' ? 'bg-primary/10 text-primary' : u.role === 'encargado' ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent-foreground'
-              }`}>
-                <Shield className="h-3 w-3" />
-                {roleLabels[u.role] || u.role}
-              </span>
+              <div className="flex flex-col items-start gap-0.5">
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                  u.role === 'supervisor' ? 'bg-destructive/10 text-destructive' : u.role === 'coordinador' ? 'bg-primary/10 text-primary' : u.role === 'encargado' ? 'bg-warning/10 text-warning' : 'bg-accent/10 text-accent-foreground'
+                }`}>
+                  <Shield className="h-3 w-3" />
+                  {roleLabels[u.role] || u.role}
+                </span>
+                {u.role === 'consulta' && u.specialty && (
+                  <span className="text-xs text-muted-foreground capitalize ml-1">{u.specialty === 'anestesiologo' ? 'Anestesiólogo' : u.specialty === 'cirujano' ? 'Cirujano' : 'Otro'}</span>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString('es-ES')}</span>
             </motion.div>
           ))}
