@@ -102,6 +102,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Update specialty if consulta
+    if (role === "consulta" && specialty) {
+      await adminClient.from("profiles").update({ specialty }).eq("id", newUser.user.id);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

@@ -126,7 +126,7 @@ export default function AdminUsers() {
 
             <div className="space-y-1.5">
               <Label>Rol</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v, specialty: '' })}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="supervisor">Supervisor</SelectItem>
@@ -136,6 +136,20 @@ export default function AdminUsers() {
                 </SelectContent>
               </Select>
             </div>
+
+            {form.role === 'consulta' && (
+              <div className="space-y-1.5">
+                <Label>Especialidad</Label>
+                <Select value={form.specialty} onValueChange={(v) => setForm({ ...form, specialty: v })}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar especialidad" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cirujano">Cirujano</SelectItem>
+                    <SelectItem value="anestesiologo">Anestesiólogo</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
