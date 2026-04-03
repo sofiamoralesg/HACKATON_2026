@@ -128,7 +128,8 @@ export default function AdminUsers() {
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar rol" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="coordinador">Coordinador / Admin</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                  <SelectItem value="coordinador">Coordinador</SelectItem>
                   <SelectItem value="encargado">Encargado del Checklist</SelectItem>
                   <SelectItem value="consulta">Acceso de Consulta</SelectItem>
                 </SelectContent>
