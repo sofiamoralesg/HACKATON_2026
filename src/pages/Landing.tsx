@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, ClipboardCheck, AlertTriangle, BarChart3, Users, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/authContext';
 
 const features = [
   { icon: ClipboardCheck, title: 'Checklist Digital', desc: 'Los 3 momentos críticos de la OMS: Sign In, Time Out, Sign Out. Ningún paso se puede omitir.' },
