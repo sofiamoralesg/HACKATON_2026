@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Checklist from "./pages/Checklist";
 import NewSurgery from "./pages/NewSurgery";
 import History from "./pages/History";
+import SurgeryDetail from "./pages/SurgeryDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const AppRoutes = () => (
     <Route path="/checklist/:id" element={<ProtectedRoute><Checklist /></ProtectedRoute>} />
     <Route path="/nueva-cirugia" element={<ProtectedRoute><NewSurgery /></ProtectedRoute>} />
     <Route path="/historial" element={<ProtectedRoute><History /></ProtectedRoute>} />
+    <Route path="/cirugia/:id" element={<ProtectedRoute><SurgeryDetail /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

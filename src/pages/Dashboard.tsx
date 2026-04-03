@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { mockSurgeries } from '@/lib/mockData';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, MapPin, User, ArrowRight, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, ArrowRight, AlertTriangle, CheckCircle2, Activity, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   programada: { label: 'Programada', color: 'bg-secondary text-secondary-foreground' },
@@ -20,6 +19,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const isCoordinator = user?.role === 'coordinador';
+  const isConsulta = user?.role === 'consulta';
 
   const stats = isCoordinator
     ? [
@@ -41,7 +41,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats for coordinator */}
       {stats && (
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s, i) => {
@@ -65,7 +64,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Surgeries list */}
       <div className="space-y-3">
         {mockSurgeries.map((surgery, i) => {
           const status = statusConfig[surgery.status];
@@ -95,15 +93,27 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {canStartChecklist && (
-                  <Button
-                    onClick={() => navigate(`/checklist/${surgery.id}`)}
-                    className="gap-2"
-                  >
-                    {surgery.status === 'programada' ? 'Iniciar Checklist' : 'Continuar'}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {isConsulta && (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(`/cirugia/${surgery.id}`)}
+                      className="gap-2"
+                    >
+                      <Eye className="h-4 w-4" /> Ver Detalle
+                    </Button>
+                  )}
+
+                  {canStartChecklist && (
+                    <Button
+                      onClick={() => navigate(`/checklist/${surgery.id}`)}
+                      className="gap-2"
+                    >
+                      {surgery.status === 'programada' ? 'Iniciar Checklist' : 'Continuar'}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </motion.div>
           );
