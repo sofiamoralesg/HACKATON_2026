@@ -22,88 +22,104 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-async function loadAppUser(supaUser: SupaUser): Promise<AppUser | null> {
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('name, email')
-      .eq('id', supaUser.id)
-      .single();
+async function loadAppUser(userId: string): Promise<AppUser | null> {
+  const [profileRes, roleRes] = await Promise.all([
+    supabase.from('profiles').select('name, email').eq('id', userId).single(),
+    supabase.from('user_roles').select('role').eq('user_id', userId).single(),
+  ]);
 
-    const { data: roleRow } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', supaUser.id)
-      .single();
-
-    if (!profile || !roleRow) return null;
-
-    return {
-      id: supaUser.id,
-      name: profile.name,
-      email: profile.email,
-      role: roleRow.role as UserRole,
-    };
-  } catch {
+  if (profileRes.error || roleRes.error || !profileRes.data || !roleRes.data) {
+    console.error('loadAppUser failed:', { profileErr: profileRes.error, roleErr: roleRes.error });
     return null;
   }
+
+  return {
+    id: userId,
+    name: profileRes.data.name,
+    email: profileRes.data.email,
+    role: roleRes.data.role as UserRole,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshUser = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const appUser = await loadAppUser(session.user);
-      setUser(appUser);
-    } else {
-      setUser(null);
-    }
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    // Set up listener BEFORE checking session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    let mounted = true;
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       if (session?.user) {
-        const appUser = await loadAppUser(session.user);
-        setUser(appUser);
+        // Use setTimeout to avoid potential deadlock with Supabase auth
+        setTimeout(async () => {
+          if (!mounted) return;
+          const appUser = await loadAppUser(session.user.id);
+          if (mounted) {
+            setUser(appUser);
+            setLoading(false);
+          }
+        }, 0);
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // Check initial session
-    refreshUser();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        const appUser = await loadAppUser(session.user.id);
+        if (mounted) {
+          setUser(appUser);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    });
 
-    return () => subscription.unsubscribe();
-  }, [refreshUser]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
-  const login = async (email: string, password: string, role: UserRole) => {
+  const login = async (email: string, password: string, role: UserRole): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { success: false, error: 'Correo o contraseña incorrectos.' };
 
-    // Verify role matches
-    const { data: roleRow } = await supabase
+    // Verify role
+    const { data: roleRow, error: roleErr } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', data.user.id)
       .single();
 
-    if (!roleRow || roleRow.role !== role) {
+    if (roleErr || !roleRow || roleRow.role !== role) {
       await supabase.auth.signOut();
       return { success: false, error: 'El rol seleccionado no corresponde a este usuario.' };
     }
 
-    // Wait for onAuthStateChange to set the user — just return success
-    // The useEffect in Login.tsx will handle navigation when user state updates
-    return { success: true };
+    // Directly set user without waiting for onAuthStateChange
+    const appUser = await loadAppUser(data.user.id);
+    if (appUser) {
+      setUser(appUser);
+      return { success: true };
+    }
+    return { success: false, error: 'Error al cargar perfil de usuario.' };
   };
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+  const signUp = async (email: string, password: string, name: string, role: UserRole): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -119,9 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (roleError) return { success: false, error: 'Error al asignar el rol: ' + roleError.message };
 
-    // Refresh user data to pick up the new role
-    await refreshUser();
-    return { success: true };
+    // Directly set user
+    const appUser = await loadAppUser(data.user.id);
+    if (appUser) {
+      setUser(appUser);
+      return { success: true };
+    }
+    return { success: false, error: 'Error al cargar perfil de usuario.' };
   };
 
   const logout = async () => {
