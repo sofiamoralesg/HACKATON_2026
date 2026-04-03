@@ -62,7 +62,7 @@ export default function AdminClinics() {
 
   const startEdit = (c: typeof clinics[0]) => {
     setEditingId(c.id);
-    setEditForm({ name: c.name, nit: c.nit, address: c.address });
+    setEditForm({ name: c.name, nit: c.nit, address: c.address, num_operating_rooms: String((c as any).num_operating_rooms || 4) });
   };
 
   const handleUpdate = async () => {
