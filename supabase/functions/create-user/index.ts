@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, role } = await req.json();
+    const { email, password, name, role, specialty } = await req.json();
 
     if (!email || !password || !name || !role) {
       return new Response(JSON.stringify({ error: "Faltan campos requeridos" }), {
@@ -62,6 +62,13 @@ Deno.serve(async (req) => {
 
     if (!["supervisor", "coordinador", "encargado", "consulta"].includes(role)) {
       return new Response(JSON.stringify({ error: "Rol inválido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (role === "consulta" && !specialty) {
+      return new Response(JSON.stringify({ error: "La especialidad es requerida para usuarios de consulta" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
