@@ -1,14 +1,31 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/authContext';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2, XCircle, Clock, User, MapPin, Shield, Wrench, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import SearchableSelect from '@/components/SearchableSelect';
+import { ArrowLeft, CheckCircle2, XCircle, Clock, User, MapPin, Shield, Wrench, Loader2, Pencil, Trash2, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function SurgeryDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isCoordinator = user?.role === 'coordinador';
 
   const { data: surgery, isLoading: loadingSurgery } = useQuery({
     queryKey: ['surgery-detail', id],
@@ -18,6 +35,37 @@ export default function SurgeryDetail() {
       return data;
     },
   });
+
+  const [editForm, setEditForm] = useState({
+    patient: '', procedure_name: '', room: '', date: '', time: '',
+    surgeon: '', anesthesiologist: '', checklist_owner: '',
+  });
+
+  // Fetch consulta users (surgeons / anesthesiologists)
+  const { data: consultaUsers = [] } = useQuery({
+    queryKey: ['consulta-users'],
+    queryFn: async () => {
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'consulta');
+      if (!roles || roles.length === 0) return [];
+      const { data: profiles } = await supabase.from('profiles').select('id, name, specialty').in('id', roles.map(r => r.user_id));
+      return profiles || [];
+    },
+  });
+
+  // Fetch encargado users (checklist owners)
+  const { data: encargadoUsers = [] } = useQuery({
+    queryKey: ['encargado-users'],
+    queryFn: async () => {
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'encargado');
+      if (!roles || roles.length === 0) return [];
+      const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', roles.map(r => r.user_id));
+      return profiles || [];
+    },
+  });
+
+  const surgeonsList = consultaUsers.filter(u => u.specialty === 'cirujano').map(u => u.name);
+  const anesthesiologistsList = consultaUsers.filter(u => u.specialty === 'anestesiologo').map(u => u.name);
+  const encargadosList = encargadoUsers.map(u => u.name);
 
   const { data: phases = [] } = useQuery({
     queryKey: ['phases', id],
@@ -61,6 +109,55 @@ export default function SurgeryDetail() {
     enabled: !!id,
   });
 
+  const startEditing = () => {
+    if (!surgery) return;
+    setEditForm({
+      patient: surgery.patient,
+      procedure_name: surgery.procedure_name,
+      room: surgery.room,
+      date: surgery.date,
+      time: surgery.time,
+      surgeon: surgery.surgeon,
+      anesthesiologist: surgery.anesthesiologist,
+      checklist_owner: surgery.checklist_owner,
+    });
+    setEditing(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase.from('surgeries').update({
+      patient: editForm.patient,
+      procedure_name: editForm.procedure_name,
+      room: editForm.room,
+      date: editForm.date,
+      time: editForm.time,
+      surgeon: editForm.surgeon,
+      anesthesiologist: editForm.anesthesiologist,
+      checklist_owner: editForm.checklist_owner,
+    }).eq('id', id!);
+    if (error) {
+      toast.error('Error al guardar: ' + error.message);
+    } else {
+      toast.success('Cirugía actualizada');
+      setEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['surgery-detail', id] });
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const { error } = await supabase.from('surgeries').delete().eq('id', id!);
+    if (error) {
+      toast.error('Error al eliminar: ' + error.message);
+      setDeleting(false);
+    } else {
+      toast.success('Cirugía eliminada');
+      navigate('/dashboard');
+    }
+  };
+
   if (loadingSurgery) {
     return <Layout><div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
@@ -85,15 +182,96 @@ export default function SurgeryDetail() {
   return (
     <Layout>
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{surgery.patient}</h1>
-            <p className="text-sm text-muted-foreground">{surgery.procedure_name}</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{surgery.patient}</h1>
+              <p className="text-sm text-muted-foreground">{surgery.procedure_name}</p>
+            </div>
           </div>
+          {isCoordinator && !editing && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={startEditing} className="gap-2">
+                <Pencil className="h-4 w-4" /> Editar
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="gap-2">
+                    <Trash2 className="h-4 w-4" /> Eliminar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar esta cirugía?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción no se puede deshacer. Se eliminarán todos los datos asociados.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={deleting}>
+                      {deleting ? 'Eliminando...' : 'Eliminar'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
+
+        {/* Edit Form */}
+        {editing && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 rounded-xl border bg-card p-6 space-y-4">
+            <h3 className="font-semibold text-foreground">Editar Cirugía</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label>Paciente</Label>
+                <Input className="mt-1.5" value={editForm.patient} onChange={e => setEditForm({ ...editForm, patient: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Procedimiento</Label>
+                <Input className="mt-1.5" value={editForm.procedure_name} onChange={e => setEditForm({ ...editForm, procedure_name: e.target.value })} />
+              </div>
+              <div>
+                <Label>Sala</Label>
+                <Input className="mt-1.5" value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })} />
+              </div>
+              <div>
+                <Label>Fecha</Label>
+                <Input className="mt-1.5" type="date" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} />
+              </div>
+              <div>
+                <Label>Hora</Label>
+                <Input className="mt-1.5" type="time" value={editForm.time} onChange={e => setEditForm({ ...editForm, time: e.target.value })} />
+              </div>
+              <div>
+                <Label>Cirujano</Label>
+                <div className="mt-1.5">
+                  <SearchableSelect options={surgeonsList} value={editForm.surgeon} onChange={v => setEditForm({ ...editForm, surgeon: v })} placeholder="Buscar cirujano..." />
+                </div>
+              </div>
+              <div>
+                <Label>Anestesiólogo</Label>
+                <div className="mt-1.5">
+                  <SearchableSelect options={anesthesiologistsList} value={editForm.anesthesiologist} onChange={v => setEditForm({ ...editForm, anesthesiologist: v })} placeholder="Buscar anestesiólogo..." />
+                </div>
+              </div>
+              <div>
+                <Label>Encargado del Checklist</Label>
+                <div className="mt-1.5">
+                  <SearchableSelect options={encargadosList} value={editForm.checklist_owner} onChange={v => setEditForm({ ...editForm, checklist_owner: v })} placeholder="Buscar encargado..." />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setEditing(false)} className="gap-2"><X className="h-4 w-4" /> Cancelar</Button>
+              <Button onClick={handleSave} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> {saving ? 'Guardando...' : 'Guardar'}</Button>
+            </div>
+          </motion.div>
+        )}
 
         <div className="mb-6 rounded-xl border bg-card p-4">
           <div className="flex flex-wrap gap-4 text-sm">
@@ -109,7 +287,6 @@ export default function SurgeryDetail() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Sign In */}
             {getPhaseAnswers('sign-in').length > 0 && (
               <Section title="Sign In — Antes de la anestesia" completedAt={getPhaseCompletedAt('sign-in')}>
                 {getPhaseAnswers('sign-in').map((q) => (
@@ -118,7 +295,6 @@ export default function SurgeryDetail() {
               </Section>
             )}
 
-            {/* Time Out */}
             {getPhaseAnswers('time-out').length > 0 && (
               <Section title="Time Out — Antes de la incisión" completedAt={getPhaseCompletedAt('time-out')}>
                 {getPhaseAnswers('time-out').map((q) => (
@@ -143,7 +319,6 @@ export default function SurgeryDetail() {
               </Section>
             )}
 
-            {/* Sign Out */}
             {getPhaseAnswers('sign-out').length > 0 && (
               <Section title="Sign Out — Antes de cerrar" completedAt={getPhaseCompletedAt('sign-out')}>
                 {getPhaseAnswers('sign-out').map((q) => (
@@ -178,7 +353,6 @@ export default function SurgeryDetail() {
               </Section>
             )}
 
-            {/* Signature */}
             {signature && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card p-5">
                 <div className="flex items-center gap-2 mb-4">
