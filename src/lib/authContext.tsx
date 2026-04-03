@@ -100,12 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { success: false, error: error.message };
     if (!data.user) return { success: false, error: 'No se pudo crear el usuario.' };
 
-    // Assign role
-    const { error: roleError } = await supabase.from('user_roles').insert({
-      user_id: data.user.id,
-      role,
+    // Assign role using security definer function
+    const { error: roleError } = await supabase.rpc('assign_user_role', {
+      _user_id: data.user.id,
+      _role: role,
     });
-    if (roleError) return { success: false, error: 'Error al asignar el rol.' };
+    if (roleError) return { success: false, error: 'Error al asignar el rol: ' + roleError.message };
 
     const appUser = await loadAppUser(data.user);
     setUser(appUser);
