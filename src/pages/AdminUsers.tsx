@@ -225,7 +225,7 @@ export default function AdminUsers() {
               </Select>
             </div>
 
-            {user?.isSuperAdmin && form.role === 'supervisor' && (
+            {user?.isSuperAdmin && (
               <div className="space-y-1.5">
                 <Label>Clínica</Label>
                 <Select value={form.clinicId} onValueChange={(v) => setForm({ ...form, clinicId: v })}>
