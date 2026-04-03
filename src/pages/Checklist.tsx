@@ -123,14 +123,27 @@ export default function Checklist() {
 
     // Save answers
     if (questions.length > 0) {
-      const answers = questions.map((q) => ({
-        phase_id: phaseRow.id,
-        question_id: q.id,
-        question_text: q.text,
-        answer: q.answer || null,
-        answered_by: q.answeredBy || null,
-        answered_at: q.answeredAt ? new Date().toISOString() : null,
-      }));
+      const answers = questions.flatMap((q) => {
+        const rows = [{
+          phase_id: phaseRow.id,
+          question_id: q.id,
+          question_text: q.text,
+          answer: q.answer || null,
+          answered_by: q.answeredBy || null,
+          answered_at: q.answeredAt ? new Date().toISOString() : null,
+        }];
+        if (q.followUpText && q.answer === 'si') {
+          rows.push({
+            phase_id: phaseRow.id,
+            question_id: q.id + '-followup',
+            question_text: q.followUpText,
+            answer: q.followUpAnswer || null,
+            answered_by: q.answeredBy || null,
+            answered_at: q.answeredAt ? new Date().toISOString() : null,
+          });
+        }
+        return rows;
+      });
       const { error: ansErr } = await supabase.from('checklist_answers').insert(answers);
       if (ansErr) throw ansErr;
     }
